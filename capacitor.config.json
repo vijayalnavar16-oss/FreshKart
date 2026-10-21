@@ -1,0 +1,10 @@
+
+{
+  "appId": "com.freshkart.app",
+  "appName": "FreshKart",
+  "webDir": "www",
+  "server": {
+    "url": "https://YOUR-FRESHKART-WEBSITE-URL",
+    "cleartext": false
+  }
+}
