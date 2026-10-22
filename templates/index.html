@@ -563,7 +563,7 @@ async function loadProducts() {
   try {
     // Temporary: existing endpoint.
     // We will add a public customer endpoint in a later step.
-    const response = await fetch("/api/admin/products");
+    const response = await fetch("/api/products");
 
     if (!response.ok) {
       throw new Error("HTTP " + response.status);
