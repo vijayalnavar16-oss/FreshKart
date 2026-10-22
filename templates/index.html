@@ -1,27 +1,622 @@
-<!doctype html>
-<html lang="en">
+
+<!DOCTYPE html>
+<html lang="kn">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#064b35"><title>Fresh Kart | Farmer to Customer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087443">
+  <title>ರೈತ ಮಾರ್ಕೆಟ್ | FreshKart</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Kannada:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    :root {
+      --green: #087443;
+      --dark: #064b30;
+      --light: #eaf7e9;
+      --bg: #f5f8f2;
+      --text: #193c2a;
+      --muted: #718174;
+      --border: #e2ebdf;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", "Noto Sans Kannada", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    a { text-decoration: none; color: inherit; }
+
+    .app {
+      max-width: 600px;
+      min-height: 100vh;
+      margin: auto;
+      padding-bottom: 85px;
+      background: white;
+    }
+
+    .topbar {
+      padding: 16px;
+      color: white;
+      background: var(--green);
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      display: grid;
+      place-items: center;
+      width: 43px;
+      height: 43px;
+      background: white;
+      border-radius: 13px;
+      font-size: 25px;
+    }
+
+    .brand h1 { margin: 0; font-size: 18px; }
+    .brand p { margin: 4px 0 0; font-size: 10px; color: #d7f2dd; }
+
+    .header-actions { display: flex; align-items: center; gap: 7px; }
+
+    .icon-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px;
+      background: #ffffff20;
+      color: white;
+      font-size: 14px;
+    }
+
+    .location { margin-top: 15px; font-size: 12px; color: #e4f4e7; }
+
+    .search-wrap { padding: 14px 16px; }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: #f5f8f3;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      font-size: 13px;
+    }
+
+    .hero {
+      margin: 0 16px 20px;
+      padding: 22px 18px;
+      min-height: 165px;
+      border-radius: 17px;
+      color: white;
+      background: linear-gradient(110deg, #064b30ed, #087443a0),
+        url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=80") center/cover;
+    }
+
+    .hero small { font-size: 10px; letter-spacing: 1px; }
+    .hero h2 { font-size: 24px; line-height: 1.45; margin: 10px 0; }
+    .hero p { margin: 0; font-size: 12px; }
+
+    .section { padding: 0 16px; margin-bottom: 24px; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+
+    .section-head h2 { margin: 0; font-size: 17px; }
+    .section-head a { font-size: 11px; color: var(--green); }
+
+    .categories {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+
+    .categories::-webkit-scrollbar { display: none; }
+
+    .category {
+      flex: 0 0 84px;
+      padding: 12px 5px;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: white;
+      color: var(--text);
+    }
+
+    .category.active {
+      background: var(--light);
+      border-color: #a6d8a6;
+    }
+
+    .category span { display: block; font-size: 25px; margin-bottom: 7px; }
+    .category strong { font-size: 11px; }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 13px;
+    }
+
+    .product {
+      overflow: hidden;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+    }
+
+    .product-photo {
+      height: 125px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #eff6eb;
+      font-size: 38px;
+    }
+
+    .product-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .product-body { padding: 11px; }
+    .product-name { margin-bottom: 5px; font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+    .product-desc { margin-bottom: 9px; font-size: 10px; color: var(--muted); }
+    .product-price { margin-bottom: 10px; color: var(--green); font-size: 16px; font-weight: 800; }
+
+    .add-btn {
+      width: 100%;
+      padding: 10px 5px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--green);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .status, .empty { padding: 16px; font-size: 12px; color: var(--muted); }
+    .empty { text-align: center; padding: 30px 10px; }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 5;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      width: 100%;
+      max-width: 600px;
+      padding: 9px 5px calc(9px + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: white;
+    }
+
+    .nav-item {
+      display: grid;
+      justify-items: center;
+      gap: 4px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .nav-item span { font-size: 21px; }
+    .nav-item.active { color: var(--green); font-weight: 800; }
+
+    @media (min-width: 700px) {
+      body { padding: 20px 0; }
+      .app { border-radius: 20px; overflow: hidden; }
+      .bottom-nav { bottom: 20px; }
+    }
+  </style>
 </head>
-<body class="fk-dashboard">
-<aside class="fk-sidebar">
- <a class="fk-brand" href="/"><span class="fk-logo">🌿<small>🥕🍅🥬</small></span><strong>Fresh Kart <b>(F to C)</b><small>Farmer to Customer</small></strong></a>
- <nav class="fk-nav"><a class="selected" href="/">⌂ <span>Home</span></a><a href="#shop">❧ <span>Vegetables</span></a><button id="sidebar-cart" type="button">🛒 <span>My Cart</span><b id="sidebar-cart-count">0</b></button><span id="cart-count" hidden>0</span><a href="#shop">▣ <span>My Orders</span></a><button type="button" id="profile-link">♙ <span>Profile</span></button><a href="#help">？ <span>Help</span></a></nav>
- <div class="fk-farm-art">🌱　🌾　🌱</div><p class="fk-kannada">ರೈತರಿಂದ ನೇರವಾಗಿ<br>ನಿಮ್ಮ ಮನೆಗೆ<small>ಬೆಳೆಗಾರರಿಗೆ ಬೆಂಬಲ ನೀಡಿ</small></p>
-</aside>
-<div class="fk-main">
- <header class="fk-topbar"><form class="search-form fk-search" id="search-form" role="search"><span>⌕</span><label class="visually-hidden" for="search-input">Search vegetables</label><input id="search-input" type="search" placeholder="Search vegetables..." autocomplete="off"><button id="clear-search" type="button" aria-label="Clear search" hidden>×</button></form><button class="fk-location location-button" type="button">📍 <strong>Avaradi, Belagavi</strong>⌄</button><button class="fk-account account-button" type="button"><span>♙</span> Customer ⌄</button></header>
- <main class="fk-layout"><div class="fk-center">
-  <section class="fk-hero"><div class="fk-hero-copy"><small>FRESH • LOCAL • FARM-GROWN</small><h1>Fresh Vegetables<br><em>from Our Farmers</em><br>to Your Home</h1><p>Farm Fresh　•　Natural　•　Chemical Free</p><a href="#shop">Shop vegetables ↗</a></div><img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=85" alt="Fresh vegetables from local farms" onerror="this.style.display='none'"></section>
-  <section class="fk-categories" aria-label="Vegetable categories"><div id="category-list"><button class="category-item active" data-category="all" type="button"><i>🍅</i>All</button><button class="category-item" data-category="Leafy greens" type="button"><i>🌿</i>Leafy Greens</button><button class="category-item" data-category="Root Vegetables" type="button"><i>🥕</i>Root Vegetables</button><button class="category-item" data-category="Fruits" type="button"><i>🍅</i>Fruits &amp; Vegetables</button><button class="category-item" data-category="Beans & Legumes" type="button"><i>🫛</i>Beans &amp; Legumes</button><button class="category-item" data-category="Other" type="button"><i>🧅</i>Other Veggies</button></div></section>
-  <section class="fk-shop" id="shop"><div class="fk-shop-head"><div><small>FARM TO CUSTOMER</small><h2>Fresh Vegetables</h2><p>Good food, grown close to home.</p></div><div class="fk-filters"><label><input id="in-stock-only" type="checkbox" checked> In stock</label><label class="visually-hidden" for="sort-products">Sort products</label><select id="sort-products"><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option><option value="recent">Recently added</option></select></div></div><div id="product-status" class="product-status" role="status" aria-live="polite">Loading vegetables…</div><div class="product-grid" id="product-grid"></div><div class="no-results" id="no-results" hidden><h3>No vegetables found.</h3><p id="no-results-help">Try another search.</p><button id="reset-filters" type="button">See all vegetables</button></div></section>
- </div><aside class="fk-right"><section class="fk-card"><div class="fk-card-head"><h2>🛒 My Cart</h2><button id="open-cart" type="button">View All</button></div><div class="fk-cart-preview"><span>🧺</span><strong>Your cart is empty</strong><p>Add fresh vegetables from our farm</p><button id="browse-vegetables" type="button">Browse Vegetables</button></div></section><section class="fk-card fk-why"><h2>🍃 Why Fresh Kart?</h2><ul><li>✓ <span>Direct from farmers</span></li><li>✓ <span>Fresh &amp; seasonal vegetables</span></li><li>✓ <span>Better price for farmers</span></li><li>✓ <span>Healthy &amp; natural</span></li><li>✓ <span>Supports local farming</span></li></ul></section><section class="fk-farmer-banner"><img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=700&q=80" alt="Green farmland" onerror="this.style.display='none'"><div><h2>Real Farmers,<br>Real Freshness</h2><p>❧ Together for<br>a healthier tomorrow</p></div></section></aside></main>
- <footer id="help" class="fk-footer">Fresh Kart · Farmer to Customer · Supporting local farmers in Belagavi</footer>
+
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="top-row">
+      <a class="brand" href="/">
+        <div class="logo">🌿</div>
+        <div>
+          <h1 data-i18n="brand">ರೈತ ಮಾರ್ಕೆಟ್</h1>
+          <p>FreshKart · Farmer to Customer</p>
+        </div>
+      </a>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="language-toggle" type="button">EN</button>
+        <button class="icon-btn" id="cart-button" type="button">
+          🛒 <span id="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="location" data-i18n="location">📍 ಅವ್ರಾಡಿ, ಬೆಳಗಾವಿ</div>
+  </header>
+
+  <div class="search-wrap">
+    <label class="search">
+      🔍
+      <input id="search" type="search" data-i18n-placeholder="search"
+        placeholder="ತರಕಾರಿಗಳನ್ನು ಹುಡುಕಿ...">
+    </label>
+  </div>
+
+  <section class="hero">
+    <small data-i18n="heroSmall">ತಾಜಾ · ಸ್ಥಳೀಯ · ರೈತರ ಬೆಳೆ</small>
+    <h2 data-i18n-html="heroTitle">ನಮ್ಮ ರೈತರು ಬೆಳೆದ<br>ತಾಜಾ ತರಕಾರಿಗಳು 🥬</h2>
+    <p data-i18n="heroDesc">ರೈತರಿಂದ ನೇರವಾಗಿ ನಿಮ್ಮ ಮನೆಗೆ</p>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2 data-i18n="categoriesTitle">ತರಕಾರಿ ವರ್ಗಗಳು</h2>
+    </div>
+
+    <div class="categories" id="categories">
+      <button class="category active" data-category="all">
+        <span>🥬</span><strong data-i18n="all">ಎಲ್ಲಾ</strong>
+      </button>
+      <button class="category" data-category="Leafy greens">
+        <span>🌿</span><strong data-i18n="leafy">ಸೊಪ್ಪು</strong>
+      </button>
+      <button class="category" data-category="Root vegetables">
+        <span>🥕</span><strong data-i18n="roots">ಗೆಡ್ಡೆಗಳು</strong>
+      </button>
+      <button class="category" data-category="Fruits">
+        <span>🍅</span><strong data-i18n="fruits">ಹಣ್ಣುಗಳು</strong>
+      </button>
+      <button class="category" data-category="Beans & Legumes">
+        <span>🫛</span><strong data-i18n="beans">ಬೀನ್ಸ್</strong>
+      </button>
+      <button class="category" data-category="Other">
+        <span>🧅</span><strong data-i18n="other">ಇತರೆ</strong>
+      </button>
+    </div>
+  </section>
+
+  <section class="section" id="shop">
+    <div class="section-head">
+      <h2 data-i18n="productsTitle">ಇಂದಿನ ತಾಜಾ ತರಕಾರಿಗಳು</h2>
+      <a href="#shop" data-i18n="seeAll">ಎಲ್ಲವನ್ನೂ ನೋಡಿ →</a>
+    </div>
+
+    <div id="product-status" class="status">ತರಕಾರಿಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...</div>
+    <div class="products" id="products"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2 data-i18n="supportTitle">ನಮ್ಮ ರೈತರನ್ನು ಬೆಂಬಲಿಸಿ 🌱</h2>
+    </div>
+    <p data-i18n="supportDesc" style="font-size:12px;line-height:1.8;color:#718174">
+      ಸ್ಥಳೀಯ ರೈತರಿಂದ ತಾಜಾ ಉತ್ಪನ್ನಗಳನ್ನು ಖರೀದಿಸಿ.
+    </p>
+  </section>
+
 </div>
-<div class="cart-backdrop" id="cart-backdrop" hidden></div><aside class="cart-drawer" id="cart-drawer" aria-labelledby="cart-title" aria-modal="true" role="dialog" aria-hidden="true"><div class="cart-drawer-head"><div><span class="fk-eyebrow">FRESH FROM THE FARM</span><h2 id="cart-title">My Cart<span>.</span></h2></div><button id="close-cart" class="icon-button" type="button" aria-label="Close cart">×</button></div><div class="cart-items" id="cart-items"></div><div class="cart-empty" id="cart-empty"><span>🧺</span><strong>Your cart is empty</strong><p>Add fresh vegetables from our farm.</p><button id="continue-shopping" type="button">Browse vegetables</button></div><div class="cart-summary" id="cart-summary" hidden><div><span>Subtotal</span><strong id="cart-subtotal">₹0</strong></div><small>Delivery and final totals are confirmed during checkout.</small><button type="button" id="demo-checkout">Continue to checkout ↗</button></div></aside><div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="{{ url_for('static', filename='js/app.js') }}" defer></script><script>
-document.addEventListener('DOMContentLoaded',()=>{const open=document.querySelector('#open-cart');document.querySelector('#sidebar-cart')?.addEventListener('click',()=>open?.click());document.querySelector('#browse-vegetables')?.addEventListener('click',()=>document.querySelector('#shop')?.scrollIntoView({behavior:'smooth'}));document.querySelector('#profile-link')?.addEventListener('click',()=>document.querySelector('.fk-account')?.click());const count=document.querySelector('#cart-count'),sideCount=document.querySelector('#sidebar-cart-count');if(count&&sideCount){const sync=()=>sideCount.textContent=count.textContent;new MutationObserver(sync).observe(count,{childList:true,subtree:true,characterData:true});sync()}const title=document.querySelector('.fk-cart-preview strong'),desc=document.querySelector('.fk-cart-preview p'),basket=document.querySelector('.fk-cart-preview span');const update=()=>{const empty=document.querySelector('#cart-empty');if(empty&&title){const isEmpty=!empty.hidden;title.textContent=isEmpty?'Your cart is empty':'Your fresh picks are waiting';desc.textContent=isEmpty?'Add fresh vegetables from our farm':'Open your cart to review your items';basket.textContent=isEmpty?'🧺':'🥬'}};const empty=document.querySelector('#cart-empty');if(empty)new MutationObserver(update).observe(empty,{attributes:true,attributeFilter:['hidden']});});
-</script></body></html>
+
+<nav class="bottom-nav">
+  <a href="/" class="nav-item active">
+    <span>⌂</span><span data-i18n="home">ಮುಖಪುಟ</span>
+  </a>
+  <button class="nav-item" id="nav-cart">
+    <span>🛍</span><span data-i18n="cart">ನನ್ನ ಕಾರ್ಟ್</span>
+  </button>
+  <button class="nav-item" id="nav-orders">
+    <span>▤</span><span data-i18n="orders">ಆರ್ಡರ್‌ಗಳು</span>
+  </button>
+  <button class="nav-item" id="nav-profile">
+    <span>♙</span><span data-i18n="profile">ಪ್ರೊಫೈಲ್</span>
+  </button>
+</nav>
+
+<script>
+const translations = {
+  kn: {
+    brand: "ರೈತ ಮಾರ್ಕೆಟ್",
+    location: "📍 ಅವ್ರಾಡಿ, ಬೆಳಗಾವಿ",
+    search: "ತರಕಾರಿಗಳನ್ನು ಹುಡುಕಿ...",
+    heroSmall: "ತಾಜಾ · ಸ್ಥಳೀಯ · ರೈತರ ಬೆಳೆ",
+    heroTitle: "ನಮ್ಮ ರೈತರು ಬೆಳೆದ<br>ತಾಜಾ ತರಕಾರಿಗಳು 🥬",
+    heroDesc: "ರೈತರಿಂದ ನೇರವಾಗಿ ನಿಮ್ಮ ಮನೆಗೆ",
+    categoriesTitle: "ತರಕಾರಿ ವರ್ಗಗಳು",
+    all: "ಎಲ್ಲಾ",
+    leafy: "ಸೊಪ್ಪು",
+    roots: "ಗೆಡ್ಡೆಗಳು",
+    fruits: "ಹಣ್ಣುಗಳು",
+    beans: "ಬೀನ್ಸ್",
+    other: "ಇತರೆ",
+    productsTitle: "ಇಂದಿನ ತಾಜಾ ತರಕಾರಿಗಳು",
+    seeAll: "ಎಲ್ಲವನ್ನೂ ನೋಡಿ →",
+    supportTitle: "ನಮ್ಮ ರೈತರನ್ನು ಬೆಂಬಲಿಸಿ 🌱",
+    supportDesc: "ಸ್ಥಳೀಯ ರೈತರಿಂದ ತಾಜಾ ಉತ್ಪನ್ನಗಳನ್ನು ಖರೀದಿಸಿ. ರೈತರಿಗೆ ಉತ್ತಮ ಮಾರುಕಟ್ಟೆ, ನಿಮಗೆ ತಾಜಾ ಆಹಾರ.",
+    home: "ಮುಖಪುಟ",
+    cart: "ನನ್ನ ಕಾರ್ಟ್",
+    orders: "ಆರ್ಡರ್‌ಗಳು",
+    profile: "ಪ್ರೊಫೈಲ್",
+    add: "🛒 ಕಾರ್ಟ್‌ಗೆ ಸೇರಿಸಿ",
+    added: "✓ ಸೇರಿಸಲಾಗಿದೆ",
+    empty: "ಈಗ ಉತ್ಪನ್ನಗಳು ಲಭ್ಯವಿಲ್ಲ.",
+    loading: "ತರಕಾರಿಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
+    loadError: "ಉತ್ಪನ್ನಗಳನ್ನು ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+    cartMessage: "ಕಾರ್ಟ್ ಕಾರ್ಯವನ್ನು ಮುಂದಿನ ಹಂತದಲ್ಲಿ ಸೇರಿಸಲಾಗುತ್ತದೆ.",
+    ordersMessage: "ಆರ್ಡರ್‌ಗಳನ್ನು ಮುಂದಿನ ಹಂತದಲ್ಲಿ ಸೇರಿಸಲಾಗುತ್ತದೆ.",
+    profileMessage: "ಪ್ರೊಫೈಲ್ ಕಾರ್ಯವನ್ನು ಮುಂದಿನ ಹಂತದಲ್ಲಿ ಸೇರಿಸಲಾಗುತ್ತದೆ."
+  },
+
+  en: {
+    brand: "Raitha Market",
+    location: "📍 Avaradi, Belagavi",
+    search: "Search vegetables...",
+    heroSmall: "FRESH · LOCAL · FARM-GROWN",
+    heroTitle: "Fresh Vegetables<br>Grown by Our Farmers 🥬",
+    heroDesc: "Direct from farmers to your home",
+    categoriesTitle: "Vegetable Categories",
+    all: "All",
+    leafy: "Leafy Greens",
+    roots: "Root Vegetables",
+    fruits: "Fruits",
+    beans: "Beans",
+    other: "Others",
+    productsTitle: "Today's Fresh Vegetables",
+    seeAll: "See all →",
+    supportTitle: "Support Our Farmers 🌱",
+    supportDesc: "Buy fresh produce directly from local farmers. Better markets for farmers, fresh food for you.",
+    home: "Home",
+    cart: "My Cart",
+    orders: "My Orders",
+    profile: "Profile",
+    add: "🛒 Add to Cart",
+    added: "✓ Added",
+    empty: "No products available right now.",
+    loading: "Loading vegetables...",
+    loadError: "Unable to load products.",
+    cartMessage: "Cart functionality will be added in the next step.",
+    ordersMessage: "Orders will be added in the next step.",
+    profileMessage: "Profile functionality will be added in the next step."
+  }
+};
+
+let language = localStorage.getItem("freshkart-language") || "kn";
+let products = [];
+let cart = {};
+let category = "all";
+
+const $ = id => document.getElementById(id);
+
+function setLanguage(nextLanguage) {
+  language = nextLanguage;
+  localStorage.setItem("freshkart-language", language);
+  document.documentElement.lang = language;
+
+  document.querySelectorAll("[data-i18n]").forEach(element => {
+    const key = element.dataset.i18n;
+    if (translations[language][key] !== undefined) {
+      element.textContent = translations[language][key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-html]").forEach(element => {
+    const key = element.dataset.i18nHtml;
+    if (translations[language][key] !== undefined) {
+      element.innerHTML = translations[language][key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(element => {
+    element.placeholder = translations[language][element.dataset.i18nPlaceholder];
+  });
+
+  $("language-toggle").textContent = language === "kn" ? "EN" : "ಕನ್ನಡ";
+  $("language-toggle").setAttribute("aria-label",
+    language === "kn" ? "Switch to English" : "ಕನ್ನಡಕ್ಕೆ ಬದಲಿಸಿ");
+
+  renderProducts();
+}
+
+function renderProducts() {
+  const grid = $("products");
+  const t = translations[language];
+  const query = $("search").value.trim().toLowerCase();
+
+  grid.replaceChildren();
+
+  const filtered = products.filter(p => {
+    const name = String(p.name || "");
+    const cat = String(p.category || "").toLowerCase();
+    const available = p.is_available !== false &&
+      Number(p.stock_quantity ?? 1) > 0;
+
+    const searchMatch = (name + " " + cat + " " +
+      String(p.description || "")).toLowerCase().includes(query);
+
+    const wanted = category.toLowerCase();
+    const categoryMatch = category === "all" ||
+      cat === wanted ||
+      (wanted === "fruits" && cat.includes("fruit")) ||
+      (wanted === "leafy greens" && cat.includes("leafy")) ||
+      (wanted === "root vegetables" && cat.includes("root")) ||
+      (wanted === "beans & legumes" && cat.includes("bean")) ||
+      (wanted === "other" && cat === "other");
+
+    return available && searchMatch && categoryMatch;
+  });
+
+  if (!filtered.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.style.gridColumn = "1 / -1";
+    empty.textContent = t.empty;
+    grid.appendChild(empty);
+    return;
+  }
+
+  filtered.forEach(p => {
+    const card = document.createElement("article");
+    card.className = "product";
+
+    const photo = document.createElement("div");
+    photo.className = "product-photo";
+
+    if (p.image_url) {
+      const img = document.createElement("img");
+      img.src = p.image_url;
+      img.alt = p.name || "Vegetable";
+      img.loading = "lazy";
+      img.onerror = () => {
+        img.remove();
+        photo.textContent = "🥬";
+      };
+      photo.appendChild(img);
+    } else {
+      photo.textContent = "🥬";
+    }
+
+    const body = document.createElement("div");
+    body.className = "product-body";
+
+    const name = document.createElement("div");
+    name.className = "product-name";
+    name.textContent = p.name || "Vegetable";
+
+    const desc = document.createElement("div");
+    desc.className = "product-desc";
+    desc.textContent = p.description || p.category || "Fresh produce";
+
+    const price = document.createElement("div");
+    price.className = "product-price";
+
+    // Adjust this field if your API returns price in rupees,
+    // rather than paise.
+    const amount = p.price_paise != null
+      ? Number(p.price_paise) / 100
+      : Number(p.price || 0);
+
+    price.textContent = "₹" + amount.toFixed(2) +
+      " / " + (p.unit || "kg");
+
+    const add = document.createElement("button");
+    add.className = "add-btn";
+    add.type = "button";
+    add.textContent = t.add;
+
+    add.addEventListener("click", () => {
+      const id = String(p.id);
+      cart[id] = (cart[id] || 0) + 1;
+
+      $("cart-count").textContent =
+        Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+
+      add.textContent = t.added;
+      setTimeout(() => {
+        add.textContent = translations[language].add;
+      }, 1000);
+    });
+
+    body.append(name, desc, price, add);
+    card.append(photo, body);
+    grid.appendChild(card);
+  });
+}
+
+async function loadProducts() {
+  $("product-status").hidden = false;
+
+  try {
+    // Temporary: existing endpoint.
+    // We will add a public customer endpoint in a later step.
+    const response = await fetch("/api/admin/products");
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status);
+    }
+
+    const data = await response.json();
+    products = Array.isArray(data) ? data :
+      Array.isArray(data.products) ? data.products : [];
+
+    $("product-status").hidden = true;
+    renderProducts();
+  } catch (error) {
+    $("product-status").textContent =
+      translations[language].loadError;
+    console.error("Unable to load products:", error);
+  }
+}
+
+$("language-toggle").addEventListener("click", () => {
+  setLanguage(language === "kn" ? "en" : "kn");
+});
+
+$("search").addEventListener("input", renderProducts);
+
+document.querySelectorAll(".category").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".category").forEach(item =>
+      item.classList.remove("active"));
+
+    button.classList.add("active");
+    category = button.dataset.category;
+    renderProducts();
+  });
+});
+
+function placeholder(messageKey) {
+  alert(translations[language][messageKey]);
+}
+
+$("cart-button").addEventListener("click", () =>
+  placeholder("cartMessage"));
+
+$("nav-cart").addEventListener("click", () =>
+  placeholder("cartMessage"));
+
+$("nav-orders").addEventListener("click", () =>
+  placeholder("ordersMessage"));
+
+$("nav-profile").addEventListener("click", () =>
+  placeholder("profileMessage"));
+
+setLanguage(language);
+loadProducts();
+</script>
+</body>
+</html>
