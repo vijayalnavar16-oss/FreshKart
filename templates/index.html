@@ -1,124 +1,27 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f7ee">
-  <meta name="description" content="Fresh vegetables and fruit, hand-picked and delivered to your doorstep with FreshKart.">
-  <title>FreshKart | Freshness, on your doorstep</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#064b35"><title>Fresh Kart | Farmer to Customer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-  <div class="announcement"><span class="announcement-dot"></span> Fresh picks, thoughtfully packed for your doorstep <span class="announcement-arrow">↗</span></div>
-  <header class="site-header">
-    <a class="brand" href="/" aria-label="FreshKart home">
-      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-      <span class="brand-name">freshkart<span>.</span></span>
-    </a>
-    <button class="location-button" type="button" aria-label="Choose delivery location">
-      <span class="location-pin" aria-hidden="true">⌖</span>
-      <span class="location-copy"><small>Delivering to</small><strong>Indiranagar, Bengaluru <span>⌄</span></strong></span>
-    </button>
-    <form class="search-form" id="search-form" role="search">
-      <span class="search-icon" aria-hidden="true">⌕</span>
-      <label class="visually-hidden" for="search-input">Search fruits and vegetables</label>
-      <input id="search-input" type="search" placeholder="Search tomatoes, apples..." autocomplete="off">
-      <button id="clear-search" class="clear-search" type="button" aria-label="Clear search" hidden>×</button>
-      <kbd>/</kbd>
-    </form>
-    <div class="header-actions">
-      <button class="account-button" type="button"><span aria-hidden="true">♙</span><span>Sign in</span></button>
-      <button class="cart-button" id="open-cart" type="button" aria-label="Open shopping cart">
-        <span class="cart-icon" aria-hidden="true">▱</span><span class="cart-label">Cart</span><span id="cart-count" class="cart-count">0</span>
-      </button>
-    </div>
-  </header>
-
-  <main>
-    <section class="hero page-width">
-      <div class="hero-copy">
-        <div class="eyebrow"><span></span> A little closer to the farm</div>
-        <h1>Good food starts<br>with <em>good</em> greens.</h1>
-        <p>Thoughtfully picked produce from people who grow it. At your door before the kettle boils.</p>
-        <a class="hero-cta" href="#shop">Shop the harvest <span aria-hidden="true">↗</span></a>
-        <div class="hero-footnote"><span class="hero-footnote-mark">✳</span><span>* Delivery timing is illustrative.</span></div>
-      </div>
-      <div class="hero-visual" aria-label="Fresh vegetables ready for delivery">
-        <div class="hero-image-wrap">
-          <img class="hero-image" src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1400&q=90" alt="A colorful selection of fresh vegetables" onerror="this.parentElement.classList.add('image-failed');this.remove()">
-          <div class="hero-image-fallback" aria-hidden="true"><span>FRESH<br>FROM THE<br>MARKET</span></div>
-        </div>
-        <div class="hero-stamp"><span>Picked<br>today</span><b>✳</b></div>
-        <div class="delivery-note"><span class="delivery-note-icon">⌁</span><span><strong>20 min*</strong><small>illustrative estimate</small></span></div>
-        <span class="hero-scribble" aria-hidden="true">Good things grow here</span>
-      </div>
-      <div class="hero-index"><span>01</span><i></i><span>03</span></div>
-    </section>
-
-    <section class="category-band" aria-label="Shop by category">
-      <div class="page-width category-inner">
-        <div class="category-intro"><span class="section-kicker">THE GOOD STUFF</span><strong>What are you<br>craving today?</strong></div>
-        <div class="category-list" id="category-list">
-          <button class="category-item active" data-category="all" type="button"><span class="category-art art-all"><i></i><i></i><i></i></span><span>Everything</span></button>
-          <button class="category-item" data-category="Vegetables" type="button"><span class="category-art art-veg"><i></i><i></i><i></i></span><span>Vegetables</span></button>
-          <button class="category-item" data-category="Fruits" type="button"><span class="category-art art-fruit"><i></i><i></i><i></i></span><span>Fruits</span></button>
-          <button class="category-item" data-category="Leafy greens" type="button"><span class="category-art art-leaf"><i></i><i></i><i></i></span><span>Leafy greens</span></button>
-        </div>
-        <span class="category-note">Always in season<br><b>when it's in season.</b></span>
-      </div>
-    </section>
-
-    <section class="shop-section page-width" id="shop">
-      <div class="shop-heading">
-        <div><span class="section-kicker">STRAIGHT FROM THE FARM</span><h2>Today's good picks<span>.</span></h2><p>Small batches. Big on freshness.</p></div>
-        <div class="shop-controls">
-          <label class="stock-toggle"><input id="in-stock-only" type="checkbox"><span class="toggle-track"></span><span>In stock</span></label>
-          <label class="visually-hidden" for="sort-products">Sort products</label>
-          <select id="sort-products"><option value="recent">Recently added</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select>
-        </div>
-      </div>
-      <div id="product-status" class="product-status" role="status" aria-live="polite">Finding today's best picks...</div>
-      <div class="product-grid" id="product-grid"></div>
-      <div class="no-results" id="no-results" hidden><span class="no-results-mark">⌕</span><h3>No items available right now. Please check back later.</h3><p id="no-results-help">Try another search or clear your filters to see what's available.</p><button id="reset-filters" type="button">See all produce</button></div>
-    </section>
-
-    <section class="offer-band">
-      <div class="page-width offer-inner">
-        <div class="offer-copy"><span class="section-kicker">A GOOD THING, SHARED</span><h2>More greens.<br>Less going out.</h2><p>Make tonight's dinner the easiest thing on your list.</p><a href="#shop">Explore the harvest <span>↗</span></a></div>
-        <div class="offer-art" aria-hidden="true"><div class="offer-disc">GOOD<br>FOOD<br><b>GOOD MOOD</b></div><span class="offer-leaf leaf-one"></span><span class="offer-leaf leaf-two"></span><span class="offer-orange"></span><span class="offer-caption">picked with care<br>packed with love</span></div>
-        <div class="offer-side-note">THE FRESHKART<br>WAY <span>✳</span></div>
-      </div>
-    </section>
-
-    <section class="promise-section page-width">
-      <div class="promise-title"><span class="section-kicker">FRESH IS A FEELING</span><h2>From our hands<br>to your kitchen.</h2></div>
-      <div class="promise-item"><span class="promise-number">01</span><span class="promise-symbol">✳</span><h3>Picked with care</h3><p>We work with growers who care about every harvest as much as you do.</p></div>
-      <div class="promise-item"><span class="promise-number">02</span><span class="promise-symbol">⌁</span><h3>Quick, not rushed</h3><p>Thoughtful packing and speedy delivery, without cutting corners.</p></div>
-      <div class="promise-item"><span class="promise-number">03</span><span class="promise-symbol">♡</span><h3>Goodness guaranteed</h3><p>Not happy with a pick? Tell us and we'll make it right.</p></div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="page-width footer-main">
-      <div class="footer-brand"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><span class="brand-name">freshkart<span>.</span></span></a><p>Fresh vegetables at your doorstep.<br>Good food, made a little easier.</p><span class="footer-city">MADE FOR BENGALURU <span>♥</span></span></div>
-      <div class="footer-column"><strong>Good things</strong><a href="#shop">Shop produce</a><a href="#shop">Seasonal picks</a><a href="#shop">Our promise</a></div>
-      <div class="footer-column"><strong>Need a hand?</strong><a href="mailto:hello@freshkart.example">hello@freshkart.example</a><a href="tel:+918000000000">+91 80000 00000</a><span>Every day, 7am – 10pm</span></div>
-      <div class="footer-note"><span>GOOD FOOD<br>IS A GOOD<br>PLACE TO START.</span><i>✳</i></div>
-    </div>
-    <div class="footer-bottom page-width"><span>© 2026 FreshKart</span><span>Made with care, in Bengaluru</span><span>Privacy · Terms</span></div>
-  </footer>
-
-  <div class="cart-backdrop" id="cart-backdrop" hidden></div>
-  <aside class="cart-drawer" id="cart-drawer" aria-labelledby="cart-title" aria-modal="true" role="dialog" aria-hidden="true">
-    <div class="cart-drawer-head"><div><span class="section-kicker">YOUR LITTLE HARVEST</span><h2 id="cart-title">Your basket<span>.</span></h2></div><button id="close-cart" class="icon-button" type="button" aria-label="Close basket">×</button></div>
-    <div class="cart-items" id="cart-items"></div>
-    <div class="cart-empty" id="cart-empty"><span>✳</span><strong>Your basket is taking a breather.</strong><p>Add something fresh to get started.</p><button id="continue-shopping" type="button">Keep browsing</button></div>
-    <div class="cart-summary" id="cart-summary" hidden><div><span>Subtotal</span><strong id="cart-subtotal">₹0</strong></div><small>Delivery and final totals are confirmed during checkout.</small><button type="button" id="demo-checkout">Continue to checkout <span>↗</span></button></div>
-  </aside>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
-</body>
-</html>
+<body class="fk-dashboard">
+<aside class="fk-sidebar">
+ <a class="fk-brand" href="/"><span class="fk-logo">🌿<small>🥕🍅🥬</small></span><strong>Fresh Kart <b>(F to C)</b><small>Farmer to Customer</small></strong></a>
+ <nav class="fk-nav"><a class="selected" href="/">⌂ <span>Home</span></a><a href="#shop">❧ <span>Vegetables</span></a><button id="sidebar-cart" type="button">🛒 <span>My Cart</span><b id="sidebar-cart-count">0</b></button><a href="#shop">▣ <span>My Orders</span></a><button type="button" id="profile-link">♙ <span>Profile</span></button><a href="#help">？ <span>Help</span></a></nav>
+ <div class="fk-farm-art">🌱　🌾　🌱</div><p class="fk-kannada">ರೈತರಿಂದ ನೇರವಾಗಿ<br>ನಿಮ್ಮ ಮನೆಗೆ<small>ಬೆಳೆಗಾರರಿಗೆ ಬೆಂಬಲ ನೀಡಿ</small></p>
+</aside>
+<div class="fk-main">
+ <header class="fk-topbar"><form class="search-form fk-search" id="search-form" role="search"><span>⌕</span><label class="visually-hidden" for="search-input">Search vegetables</label><input id="search-input" type="search" placeholder="Search vegetables..." autocomplete="off"><button id="clear-search" type="button" aria-label="Clear search" hidden>×</button></form><div class="fk-location">📍 <strong>Avaradi, Belagavi</strong>⌄</div><button class="fk-account" type="button"><span>♙</span> Customer ⌄</button></header>
+ <main class="fk-layout"><div class="fk-center">
+  <section class="fk-hero"><div class="fk-hero-copy"><small>FRESH • LOCAL • FARM-GROWN</small><h1>Fresh Vegetables<br><em>from Our Farmers</em><br>to Your Home</h1><p>Farm Fresh　•　Natural　•　Chemical Free</p><a href="#shop">Shop vegetables ↗</a></div><img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=85" alt="Fresh vegetables from local farms" onerror="this.style.display='none'"></section>
+  <section class="fk-categories" aria-label="Vegetable categories"><div id="category-list"><button class="category-item active" data-category="all" type="button"><i>🍅</i>All</button><button class="category-item" data-category="Leafy greens" type="button"><i>🌿</i>Leafy Greens</button><button class="category-item" data-category="Root Vegetables" type="button"><i>🥕</i>Root Vegetables</button><button class="category-item" data-category="Fruits" type="button"><i>🍅</i>Fruits &amp; Vegetables</button><button class="category-item" data-category="Beans & Legumes" type="button"><i>🫛</i>Beans &amp; Legumes</button><button class="category-item" data-category="Other" type="button"><i>🧅</i>Other Veggies</button></div></section>
+  <section class="fk-shop" id="shop"><div class="fk-shop-head"><div><small>FARM TO CUSTOMER</small><h2>Fresh Vegetables</h2><p>Good food, grown close to home.</p></div><div class="fk-filters"><label><input id="in-stock-only" type="checkbox" checked> In stock</label><label class="visually-hidden" for="sort-products">Sort products</label><select id="sort-products"><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option><option value="recent">Recently added</option></select></div></div><div id="product-status" class="product-status" role="status" aria-live="polite">Loading vegetables…</div><div class="product-grid" id="product-grid"></div><div class="no-results" id="no-results" hidden><h3>No vegetables found.</h3><p id="no-results-help">Try another search.</p><button id="reset-filters" type="button">See all vegetables</button></div></section>
+ </div><aside class="fk-right"><section class="fk-card"><div class="fk-card-head"><h2>🛒 My Cart</h2><button id="open-cart" type="button">View All</button></div><div class="fk-cart-preview"><span>🧺</span><strong>Your cart is empty</strong><p>Add fresh vegetables from our farm</p><button id="browse-vegetables" type="button">Browse Vegetables</button></div></section><section class="fk-card fk-why"><h2>🍃 Why Fresh Kart?</h2><ul><li>✓ <span>Direct from farmers</span></li><li>✓ <span>Fresh &amp; seasonal vegetables</span></li><li>✓ <span>Better price for farmers</span></li><li>✓ <span>Healthy &amp; natural</span></li><li>✓ <span>Supports local farming</span></li></ul></section><section class="fk-farmer-banner"><img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=700&q=80" alt="Green farmland" onerror="this.style.display='none'"><div><h2>Real Farmers,<br>Real Freshness</h2><p>❧ Together for<br>a healthier tomorrow</p></div></section></aside></main>
+ <footer id="help" class="fk-footer">Fresh Kart · Farmer to Customer · Supporting local farmers in Belagavi</footer>
+</div>
+<div class="cart-backdrop" id="cart-backdrop" hidden></div><aside class="cart-drawer" id="cart-drawer" aria-labelledby="cart-title" aria-modal="true" role="dialog" aria-hidden="true"><div class="cart-drawer-head"><div><span class="fk-eyebrow">FRESH FROM THE FARM</span><h2 id="cart-title">My Cart<span>.</span></h2></div><button id="close-cart" class="icon-button" type="button" aria-label="Close cart">×</button></div><div class="cart-items" id="cart-items"></div><div class="cart-empty" id="cart-empty"><span>🧺</span><strong>Your cart is empty</strong><p>Add fresh vegetables from our farm.</p><button id="continue-shopping" type="button">Browse vegetables</button></div><div class="cart-summary" id="cart-summary" hidden><div><span>Subtotal</span><strong id="cart-subtotal">₹0</strong></div><small>Delivery and final totals are confirmed during checkout.</small><button type="button" id="demo-checkout">Continue to checkout ↗</button></div></aside><div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script><script>
+document.addEventListener('DOMContentLoaded',()=>{const open=document.querySelector('#open-cart');document.querySelector('#sidebar-cart')?.addEventListener('click',()=>open?.click());document.querySelector('#browse-vegetables')?.addEventListener('click',()=>document.querySelector('#shop')?.scrollIntoView({behavior:'smooth'}));document.querySelector('#profile-link')?.addEventListener('click',()=>document.querySelector('.fk-account')?.click());const count=document.querySelector('#cart-count'),sideCount=document.querySelector('#sidebar-cart-count');if(count&&sideCount){const sync=()=>sideCount.textContent=count.textContent;new MutationObserver(sync).observe(count,{childList:true,subtree:true,characterData:true});sync()}const title=document.querySelector('.fk-cart-preview strong'),desc=document.querySelector('.fk-cart-preview p'),basket=document.querySelector('.fk-cart-preview span');const update=()=>{const empty=document.querySelector('#cart-empty');if(empty&&title){const isEmpty=!empty.hidden;title.textContent=isEmpty?'Your cart is empty':'Your fresh picks are waiting';desc.textContent=isEmpty?'Add fresh vegetables from our farm':'Open your cart to review your items';basket.textContent=isEmpty?'🧺':'🥬'}};const empty=document.querySelector('#cart-empty');if(empty)new MutationObserver(update).observe(empty,{attributes:true,attributeFilter:['hidden']});});
+</script></body></html>
