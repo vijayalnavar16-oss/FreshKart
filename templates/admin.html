@@ -1,50 +1,326 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#073f2c">
-<title>FreshKart | Admin Dashboard</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{font-family:"DM Sans",system-ui,sans-serif;color:#173c2c;background:#f5f8f3;--green:#167a45;--dark:#073f2c;--mint:#e9f5e9;--line:#dfe9dd;--muted:#718174;--white:#fff}*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}[hidden]{display:none!important}.shell{min-height:100vh}.sidebar{position:fixed;inset:0 auto 0 0;width:238px;background:linear-gradient(160deg,#084b34,#032f23);color:white;padding:24px 16px;display:flex;flex-direction:column;z-index:5}.brand{display:flex;align-items:center;gap:11px;padding:2px 8px 25px}.brand-mark{width:46px;height:46px;display:grid;place-items:center;background:#e9f6df;border-radius:15px;font-size:26px}.brand-name{font-family:Manrope,sans-serif;font-size:22px;font-weight:800;line-height:1.05}.brand-name span{color:#a6dc7e}.brand-name small{display:block;font-family:"DM Sans",sans-serif;font-size:11px;font-weight:500;margin-top:5px;color:#c9e0d1}.nav-label{padding:15px 12px 8px;color:#a4c7b0;font-size:10px;letter-spacing:1.5px;font-weight:800}.nav{display:grid;gap:6px}.nav a,.nav button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:#e5f2e8;text-align:left;padding:12px;border-radius:10px;font-size:13px}.nav a.active,.nav a:hover,.nav button:hover{background:#187a4b;color:white}.nav .ico{width:23px;text-align:center;font-size:17px}.sidebar-note{margin-top:auto;padding:16px 12px;border:1px solid #ffffff20;border-radius:13px;background:#ffffff0b}.sidebar-note strong{display:block;font-size:13px}.sidebar-note p{font-size:11px;color:#c3dbcb;line-height:1.6;margin:7px 0 0}.main{margin-left:238px;min-width:0}.topbar{height:76px;position:sticky;top:0;z-index:4;background:#ffffffed;backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:15px;padding:0 30px}.crumb{font-size:12px;color:var(--muted)}.crumb strong{color:var(--dark)}.top-actions{display:flex;align-items:center;gap:13px}.live-pill{display:flex;align-items:center;gap:7px;border:1px solid #d6e8d7;background:#f1faf0;border-radius:999px;padding:8px 11px;color:#276c3f;font-size:11px;font-weight:700}.dot{width:7px;height:7px;background:#28a15a;border-radius:50%}.admin-user{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700}.avatar{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#dff0dd;font-size:18px}.content{max-width:1500px;margin:auto;padding:27px 30px 40px}.heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}.eyebrow{font-size:10px;letter-spacing:1.7px;font-weight:800;color:var(--green)}h1,h2,h3,p{margin-top:0}h1{font-family:Manrope,sans-serif;font-size:29px;letter-spacing:-.7px;color:var(--dark);margin:6px 0}.sub{font-size:13px;color:var(--muted);margin:0;line-height:1.6}.date-note{font-size:11px;color:var(--muted);padding:10px 13px;border:1px solid var(--line);border-radius:10px;background:white;white-space:nowrap}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}.stat{background:white;border:1px solid var(--line);border-radius:15px;padding:17px;box-shadow:0 4px 15px #123b2607}.stat-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:11px;font-weight:700}.stat-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:#e9f5e9;font-size:19px}.stat-number{font-family:Manrope,sans-serif;font-size:27px;font-weight:800;color:var(--dark);margin:12px 0 3px}.stat-foot{font-size:10px;color:#718174}.workspace{display:grid;grid-template-columns:minmax(310px,.85fr) minmax(0,1.4fr);gap:18px;align-items:start}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 4px 18px #123b2607;min-width:0}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px}.panel-head h2{font-family:Manrope,sans-serif;font-size:17px;color:var(--dark);margin:4px 0}.panel-head p{font-size:11px;color:var(--muted);margin:0;line-height:1.5}.step-tag{font-size:10px;font-weight:800;color:#287246;background:#edf7ec;padding:7px 9px;border-radius:8px;white-space:nowrap}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.field{display:grid;gap:6px;font-size:11px;font-weight:700;color:#345541}.field.full{grid-column:1/-1}.field input,.field select,.field textarea{width:100%;min-width:0;border:1px solid #dbe6d9;background:#fcfefb;border-radius:9px;padding:11px 12px;outline:none;color:#173c2c;font-size:12px;transition:border .15s,box-shadow .15s}.field input:focus,.field select:focus,.field textarea:focus{border-color:#55a66c;box-shadow:0 0 0 3px #dff1df}.field textarea{min-height:76px;resize:vertical}.form-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.btn{border:0;border-radius:9px;background:var(--green);color:white;padding:11px 15px;font-size:12px;font-weight:800;box-shadow:0 4px 10px #167a4518}.btn:hover{filter:brightness(.96)}.btn.light{background:#edf5ec;color:#25573a;box-shadow:none}.btn.danger{background:#fff0ed;color:#a23b2d;box-shadow:none}.btn.full{width:100%}.notice{padding:11px 12px;border-radius:9px;margin-top:13px;background:#e9f7e8;color:#23643a;font-size:12px;line-height:1.5}.notice.error{background:#fff0ee;color:#9d3029}.listing-panel{padding:0;overflow:hidden}.listing-head{padding:20px 20px 14px}.listing-tools{display:flex;gap:9px;align-items:center;padding:0 20px 15px}.search{min-width:0;flex:1;display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fcfefb}.search span{font-size:17px;color:var(--muted)}.search input{width:100%;min-width:0;border:0;outline:0;background:transparent;padding:10px 0;font-size:11px}.listing-tools select{max-width:130px;border:1px solid var(--line);border-radius:9px;padding:10px 8px;background:white;font-size:10px;color:#345541}.list{display:grid;gap:0}.product{display:grid;grid-template-columns:53px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 20px;border-top:1px solid #edf1eb}.product:hover{background:#fbfdf9}.product-img{width:53px;height:53px;border-radius:11px;background:#eff6eb;object-fit:cover;display:grid;place-items:center;font-size:25px;overflow:hidden}.product-img img{width:100%;height:100%;object-fit:cover}.product-info{min-width:0}.product-info strong{display:block;color:#173f2d;font-size:12px;overflow-wrap:anywhere}.product-info small{display:block;color:var(--muted);font-size:10px;line-height:1.6;margin-top:4px}.product-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:5px}.status{display:inline-block;padding:4px 7px;border-radius:999px;background:#e7f6e8;color:#267243;font-size:9px;font-weight:800}.status.hidden{background:#fff0e6;color:#a45b26}.status.low{background:#fff3d9;color:#986716}.product-actions{display:flex;gap:6px;align-items:center}.mini{border:1px solid var(--line);background:white;border-radius:7px;padding:7px 9px;color:#2c6340;font-size:10px;font-weight:800}.mini.delete{color:#a23b2d;background:#fff7f5;border-color:#f5dfda}.empty{padding:30px 18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}.empty strong{display:block;font-size:14px;color:var(--dark);margin-bottom:5px}.listing-foot{display:flex;justify-content:space-between;gap:10px;padding:13px 20px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}.login-wrap{max-width:450px;margin:7vh auto}.login-panel{padding:28px}.login-mark{width:55px;height:55px;display:grid;place-items:center;background:#e7f5e5;border-radius:16px;font-size:30px;margin-bottom:20px}.login-panel h1{font-size:27px}.login-panel .form-grid{margin-top:22px}.login-panel .btn{margin-top:4px}.logout-form{display:flex}.logout-form .btn{border:1px solid #dbe8db;background:white;color:#315d41;box-shadow:none}.mobile-brand{display:none}@media(max-width:1250px){.workspace{grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr)}.stats{gap:10px}.stat{padding:14px}.content{padding-inline:20px}.topbar{padding-inline:20px}.product{grid-template-columns:45px minmax(0,1fr) auto;padding-inline:14px}.product-img{width:45px;height:45px}.product-actions{flex-direction:column}.product-actions button{width:54px}}@media(max-width:950px){.sidebar{width:72px;padding:18px 10px}.brand{justify-content:center;padding:0 0 25px}.brand-mark{flex-shrink:0}.brand-name,.nav-label,.nav a span:not(.ico),.nav button span,.sidebar-note{display:none}.nav a,.nav button{justify-content:center;padding:13px 5px}.nav .ico{font-size:20px}.main{margin-left:72px}.workspace{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.content{padding:22px 16px}.topbar{padding-inline:16px}}@media(max-width:560px){.topbar{height:62px}.crumb{font-size:11px}.live-pill{font-size:0;padding:10px}.dot{width:8px;height:8px}.admin-user .user-name{display:none}.content{padding:18px 11px 30px}.heading{display:block}.date-note{display:inline-block;margin-top:12px}.heading h1{font-size:25px}.stats{gap:8px}.stat{padding:12px}.stat-number{font-size:24px}.stat-top{font-size:10px}.stat-icon{width:30px;height:30px;font-size:16px}.workspace{gap:13px}.panel{padding:15px}.form-grid{gap:11px}.field.full{grid-column:1/-1}.listing-panel{padding:0}.listing-head{padding:16px 14px 12px}.listing-tools{padding:0 14px 12px}.listing-tools select{max-width:105px}.product{grid-template-columns:42px minmax(0,1fr);gap:10px;padding:12px 14px}.product-img{width:42px;height:42px}.product-actions{grid-column:2;flex-direction:row;justify-content:flex-start}.product-actions button{width:auto}.listing-foot{padding-inline:14px}.date-note{font-size:10px}.login-wrap{margin:5vh auto}.login-panel{padding:22px}.sidebar{width:58px;padding:15px 6px}.main{margin-left:58px}.brand-mark{width:40px;height:40px;font-size:23px}.nav .ico{font-size:18px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#075c3b">
+  <title>Fresh Kart | Admin Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body>
-<div class="shell">
-{% if login_mode %}
-<main class="login-wrap"><section class="panel login-panel"><div class="login-mark">🌿</div><span class="eyebrow">FARM TO CUSTOMER</span><h1>Welcome back.</h1><p class="sub">Sign in to manage FreshKart vegetables, prices and stock.</p>{% if error %}<div class="notice error">{{ error }}</div>{% endif %}<form method="post" action="/admin/login" class="form-grid"><label class="field full">Admin username<input name="username" autocomplete="username" required placeholder="Enter username"></label><label class="field full">Password<input name="password" type="password" autocomplete="current-password" required placeholder="Enter password"></label><button class="btn full" type="submit">Sign in to dashboard ↗</button></form><p class="sub" style="margin-top:20px;font-size:11px">FreshKart · ರೈತರಿಂದ ನೇರವಾಗಿ ನಿಮ್ಮ ಮನೆಗೆ</p></section></main>
-{% else %}
-<aside class="sidebar"><a class="brand" href="/"><span class="brand-mark">🌿</span><span class="brand-name">FreshKart<span>.</span><small>Farmer to Customer</small></span></a><div class="nav-label">WORKSPACE</div><nav class="nav"><a class="active" href="#dashboard"><span class="ico">▦</span><span>Overview</span></a><a href="#product-form"><span class="ico">＋</span><span>Add vegetables</span></a><a href="#listings"><span class="ico">▤</span><span>Product listings</span></a><a href="/" target="_blank" rel="noopener"><span class="ico">↗</span><span>View storefront</span></a></nav><div class="sidebar-note"><strong>🌱 Grow local, shop local</strong><p>Manage your farm produce in one place and help customers find fresh vegetables.</p></div></aside>
-<div class="main" id="dashboard"><header class="topbar"><div class="crumb">FreshKart / <strong>Admin dashboard</strong></div><div class="top-actions"><span class="live-pill"><i class="dot"></i> Store management</span><div class="admin-user"><span class="avatar">♙</span><span class="user-name">Administrator</span></div></div></header>
-<main class="content"><section class="heading"><div><span class="eyebrow">FRESH FROM THE FARM</span><h1>Good day, Admin 🌿</h1><p class="sub">Your farm shop at a glance. Keep prices and availability up to date.</p></div><div class="date-note">🥬 &nbsp; Farmer to Customer · F to C</div></section>
-<section class="stats" aria-label="Product summary"><article class="stat"><div class="stat-top"><span>Total products</span><span class="stat-icon">🧺</span></div><div class="stat-number" id="stat-total">—</div><div class="stat-foot">All saved listings</div></article><article class="stat"><div class="stat-top"><span>Available now</span><span class="stat-icon">🌱</span></div><div class="stat-number" id="stat-available">—</div><div class="stat-foot">Visible to customers</div></article><article class="stat"><div class="stat-top"><span>Low / no stock</span><span class="stat-icon">📦</span></div><div class="stat-number" id="stat-low">—</div><div class="stat-foot">Stock of 5 units or less</div></article><article class="stat"><div class="stat-top"><span>Hidden listings</span><span class="stat-icon">◌</span></div><div class="stat-number" id="stat-hidden">—</div><div class="stat-foot">Not shown in the shop</div></article></section>
-<div class="workspace"><section class="panel" id="product-form"><div class="panel-head"><div><span class="eyebrow">PRODUCT MANAGER</span><h2 id="form-heading">Add a vegetable</h2><p>Add fresh produce to your online farm shop.</p></div><span class="step-tag" id="form-tag">NEW LISTING</span></div>
-<form id="product-editor"><input id="product-id" type="hidden"><div class="form-grid"><label class="field full">Vegetable / product name<input id="name" required maxlength="120" placeholder="e.g. Fresh tomatoes"></label><label class="field">Category<select id="category" required><option>Vegetables</option><option>Fruits</option><option>Leafy greens</option><option>Root vegetables</option><option>Beans &amp; Legumes</option><option>Other</option></select></label><label class="field">Price (₹)<input id="price" type="number" min="0" step="0.01" required placeholder="30.00"></label><label class="field">Stock quantity<input id="stock" type="number" min="0" step="1" required placeholder="50"></label><label class="field">Sold by<select id="unit" required><option value="kg">kg</option><option value="500 g">500 g</option><option value="piece">piece</option><option value="bunch">bunch</option><option value="dozen">dozen</option></select></label><label class="field full">Listing status<select id="available"><option value="true">Available to customers</option><option value="false">Hidden / unavailable</option></select></label><label class="field full">Short description<textarea id="description" maxlength="500" placeholder="Freshly harvested from our farm…"></textarea></label><label class="field full">Product image URL <span style="font-weight:400;color:#718174">(optional)</span><input id="image" type="url" placeholder="https://example.com/tomatoes.jpg"></label></div><div class="form-actions"><button class="btn" id="save-button" type="submit">＋ Add product</button><button class="btn light" id="cancel-edit" type="button" hidden>Cancel edit</button><button class="btn light" id="clear-form" type="button">Clear form</button></div><div id="message" aria-live="polite"></div></form></section>
-<section class="panel listing-panel" id="listings"><div class="listing-head"><div class="panel-head" style="margin-bottom:0"><div><span class="eyebrow">YOUR FARM SHOP</span><h2>Product listings</h2><p>Review and update what customers can buy.</p></div><span class="step-tag" id="listing-count">0 PRODUCTS</span></div></div><div class="listing-tools"><label class="search"><span>⌕</span><input id="product-search" type="search" placeholder="Search products…" aria-label="Search products"></label><select id="listing-filter" aria-label="Filter products"><option value="all">All status</option><option value="available">Available</option><option value="hidden">Hidden</option><option value="low">Low stock</option></select></div><div id="products" class="list"><div class="empty">Loading your listings…</div></div><div class="listing-foot"><span id="listing-summary">Connecting to inventory…</span><span>FreshKart inventory</span></div></section></div>
-<footer style="text-align:center;color:#839286;font-size:10px;padding:24px 0 0">FreshKart · Supporting local farmers · ರೈತರಿಂದ ನೇರವಾಗಿ ನಿಮ್ಮ ಮನೆಗೆ</footer></main>
+
+<body class="admin-page">
+
+<div class="admin-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <a href="/admin" class="admin-brand">
+      <span class="admin-logo">🌿</span>
+      <span>
+        <strong>Fresh Kart</strong>
+        <small>ADMIN CONSOLE</small>
+      </span>
+    </a>
+
+    <div class="admin-profile-mini">
+      <div class="admin-avatar">👨‍💼</div>
+      <div>
+        <strong>Administrator</strong>
+        <small>Store Management</small>
+      </div>
+      <span class="online-dot"></span>
+    </div>
+
+    <nav class="admin-nav">
+      <p class="nav-heading">WORKSPACE</p>
+      <a class="admin-nav-link active" href="#overview">▦ <span>Dashboard</span></a>
+      <a class="admin-nav-link" href="#products">🥬 <span>Products</span></a>
+      <a class="admin-nav-link" href="#orders">▤ <span>Orders</span></a>
+      <a class="admin-nav-link" href="#farmers">🌾 <span>Farmers</span></a>
+      <a class="admin-nav-link" href="#customers">♙ <span>Customers</span></a>
+
+      <p class="nav-heading">MANAGEMENT</p>
+      <a class="admin-nav-link" href="#inventory">▣ <span>Inventory</span></a>
+      <a class="admin-nav-link" href="#payments">₹ <span>Payments</span></a>
+      <a class="admin-nav-link" href="#reports">▥ <span>Reports</span></a>
+      <a class="admin-nav-link" href="#settings">⚙ <span>Settings</span></a>
+    </nav>
+
+    <div class="admin-sidebar-bottom">
+      <div class="admin-support">
+        <span>💬</span>
+        <strong>Need assistance?</strong>
+        <small>Manage your store efficiently.</small>
+      </div>
+      <a href="/" class="admin-logout">↩ <span>Back to Store</span></a>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-main" id="overview">
+
+    <header class="admin-topbar">
+      <button class="admin-mobile-menu" id="admin-menu-toggle"
+              type="button" aria-label="Toggle navigation">☰</button>
+
+      <div class="admin-breadcrumb">
+        <span>Workspace</span> / <strong>Dashboard</strong>
+      </div>
+
+      <div class="admin-top-actions">
+        <span class="admin-date" id="admin-date">Today</span>
+        <button class="admin-icon-btn" type="button"
+                aria-label="Notifications">♧</button>
+        <button class="admin-user-btn" type="button">
+          <span class="admin-avatar small">👨‍💼</span>
+          <span class="admin-user-name">Admin</span>
+          <span>⌄</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="admin-content">
+
+      <div class="admin-welcome">
+        <div>
+          <span class="admin-eyebrow">FRESH KART MANAGEMENT</span>
+          <h1>Good day, Admin 👋</h1>
+          <p>Here's what's happening with your farm-to-customer store.</p>
+        </div>
+        <button class="admin-primary-btn" type="button"
+                onclick="window.print()">⇩ Export Dashboard</button>
+      </div>
+
+      <!-- STATISTICS -->
+      <div class="admin-stats">
+        <article class="admin-stat-card">
+          <div class="stat-top">
+            <span>Total Revenue</span>
+            <span class="stat-icon green">₹</span>
+          </div>
+          <h2 id="stat-revenue">₹0</h2>
+          <p>From recorded orders</p>
+        </article>
+
+        <article class="admin-stat-card">
+          <div class="stat-top">
+            <span>Total Orders</span>
+            <span class="stat-icon orange">▤</span>
+          </div>
+          <h2 id="stat-orders">0</h2>
+          <p>All recorded orders</p>
+        </article>
+
+        <article class="admin-stat-card">
+          <div class="stat-top">
+            <span>Products</span>
+            <span class="stat-icon purple">🥬</span>
+          </div>
+          <h2 id="stat-products">0</h2>
+          <p>Listed in your store</p>
+        </article>
+
+        <article class="admin-stat-card">
+          <div class="stat-top">
+            <span>Customers</span>
+            <span class="stat-icon blue">♙</span>
+          </div>
+          <h2 id="stat-customers">0</h2>
+          <p>Registered customers</p>
+        </article>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <section class="admin-panel">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Quick Actions</h2>
+            <p>Frequently used management tools</p>
+          </div>
+        </div>
+
+        <div class="admin-quick-actions">
+          <a href="#products" class="admin-action-card">
+            <span class="action-icon green">＋</span>
+            <strong>Manage Products</strong>
+            <small>Add or update vegetables</small>
+            <span class="action-arrow">↗</span>
+          </a>
+
+          <a href="#orders" class="admin-action-card">
+            <span class="action-icon orange">▤</span>
+            <strong>Manage Orders</strong>
+            <small>Review customer orders</small>
+            <span class="action-arrow">↗</span>
+          </a>
+
+          <a href="#farmers" class="admin-action-card">
+            <span class="action-icon purple">🌾</span>
+            <strong>Manage Farmers</strong>
+            <small>Farmer information</small>
+            <span class="action-arrow">↗</span>
+          </a>
+
+          <a href="#reports" class="admin-action-card">
+            <span class="action-icon blue">▥</span>
+            <strong>View Reports</strong>
+            <small>Sales and store activity</small>
+            <span class="action-arrow">↗</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- RECENT ORDERS -->
+      <section class="admin-panel" id="orders">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Recent Orders</h2>
+            <p>Latest customer purchases</p>
+          </div>
+          <button class="admin-outline-btn" type="button"
+                  id="refresh-admin">↻ Refresh</button>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="admin-orders-body">
+              <tr>
+                <td colspan="5" class="admin-table-empty">
+                  Connect your existing order data to display orders here.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PRODUCT MANAGEMENT -->
+      <section class="admin-panel" id="products">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Product Management</h2>
+            <p>Review your vegetable catalogue</p>
+          </div>
+          <a href="/" class="admin-outline-btn">View Store ↗</a>
+        </div>
+        <div id="admin-product-list" class="admin-product-list">
+          <p class="admin-table-empty">
+            Your existing product records will appear here after connecting
+            the product data source.
+          </p>
+        </div>
+      </section>
+
+      <div class="admin-lower-grid">
+        <section class="admin-panel" id="farmers">
+          <div class="admin-panel-heading">
+            <div>
+              <h2>Farmer Management</h2>
+              <p>Your farming partners</p>
+            </div>
+          </div>
+          <div class="admin-placeholder">
+            <span>🌾</span>
+            <strong>Farmer Directory</strong>
+            <p>Connect your farmer records to manage registrations and details.</p>
+          </div>
+        </section>
+
+        <section class="admin-panel" id="customers">
+          <div class="admin-panel-heading">
+            <div>
+              <h2>Customer Management</h2>
+              <p>Customer accounts</p>
+            </div>
+          </div>
+          <div class="admin-placeholder">
+            <span>👥</span>
+            <strong>Customer Directory</strong>
+            <p>Connect your customer records to view registered customers.</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="admin-panel" id="inventory">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Inventory Overview</h2>
+            <p>Stock monitoring</p>
+          </div>
+        </div>
+        <div class="admin-placeholder">
+          <span>📦</span>
+          <strong>Inventory Management</strong>
+          <p>Stock quantities will appear when connected to your product inventory.</p>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="payments">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Payments</h2>
+            <p>Order payment overview</p>
+          </div>
+        </div>
+        <div class="admin-placeholder">
+          <span>₹</span>
+          <strong>Payment Records</strong>
+          <p>Connect your payment records before displaying financial totals.</p>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="reports">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Reports & Analytics</h2>
+            <p>Business performance</p>
+          </div>
+        </div>
+        <div class="admin-placeholder">
+          <span>📊</span>
+          <strong>Store Analytics</strong>
+          <p>Reports will use your real order and payment data once connected.</p>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="settings">
+        <div class="admin-panel-heading">
+          <div>
+            <h2>Store Settings</h2>
+            <p>Configuration</p>
+          </div>
+        </div>
+        <div class="admin-placeholder">
+          <span>⚙️</span>
+          <strong>Fresh Kart Configuration</strong>
+          <p>Store settings and account controls can be added to your existing backend.</p>
+        </div>
+      </section>
+
+      <footer class="admin-footer">
+        <span>🌿 Fresh Kart</span>
+        <span>Farmer to Customer · Avaradhi, Belagavi</span>
+      </footer>
+
+    </section>
+  </main>
 </div>
-<form method="post" action="/admin/logout" class="logout-form" style="position:fixed;right:24px;bottom:18px;z-index:6"><button class="btn" style="padding:9px 12px;font-size:10px;background:#fff;color:#315d41;border:1px solid #dbe8db;box-shadow:0 3px 12px #123b2610" type="submit">↪ Log out</button></form>
-<script>
-const form=document.querySelector('#product-editor'),message=document.querySelector('#message'),list=document.querySelector('#products');
-const f={id:document.querySelector('#product-id'),name:document.querySelector('#name'),category:document.querySelector('#category'),price:document.querySelector('#price'),stock:document.querySelector('#stock'),unit:document.querySelector('#unit'),available:document.querySelector('#available'),description:document.querySelector('#description'),image:document.querySelector('#image')};
-let products=[];
-function say(text,error=false){message.className='notice'+(error?' error':'');message.textContent=text}
-function reset(){form.reset();f.id.value='';document.querySelector('#save-button').textContent='＋ Add product';document.querySelector('#cancel-edit').hidden=true;document.querySelector('#form-heading').textContent='Add a vegetable';document.querySelector('#form-tag').textContent='NEW LISTING'}
-function editProduct(p){f.id.value=p.id;f.name.value=p.name;f.category.value=p.category;f.price.value=(p.price_paise/100).toFixed(2);f.stock.value=p.stock_quantity;f.unit.value=p.unit;f.available.value=String(Boolean(p.is_available));f.description.value=p.description||'';f.image.value=p.image_url||'';document.querySelector('#save-button').textContent='✓ Save changes';document.querySelector('#cancel-edit').hidden=false;document.querySelector('#form-heading').textContent='Edit product';document.querySelector('#form-tag').textContent='EDITING #'+p.id;document.querySelector('#product-form').scrollIntoView({behavior:'smooth',block:'start'});f.name.focus()}
-async function api(path,options={}){const r=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'Request failed');return d}
-function updateStats(){document.querySelector('#stat-total').textContent=products.length;document.querySelector('#stat-available').textContent=products.filter(p=>p.is_available&&p.stock_quantity>0).length;document.querySelector('#stat-low').textContent=products.filter(p=>p.stock_quantity<=5).length;document.querySelector('#stat-hidden').textContent=products.filter(p=>!p.is_available).length;document.querySelector('#listing-count').textContent=products.length+' PRODUCT'+(products.length===1?'':'S');document.querySelector('#listing-summary').textContent=products.length+' item'+(products.length===1?'':'s')+' in your inventory'}
-function render(){const query=document.querySelector('#product-search').value.trim().toLowerCase(),filter=document.querySelector('#listing-filter').value;const filtered=products.filter(p=>{const matches=(p.name+' '+p.category+' '+(p.description||'')).toLowerCase().includes(query);const status=filter==='all'||(filter==='available'&&p.is_available&&p.stock_quantity>0)||(filter==='hidden'&&!p.is_available)||(filter==='low'&&p.stock_quantity<=5);return matches&&status});list.replaceChildren();if(!filtered.length){const e=document.createElement('div');e.className='empty';const strong=document.createElement('strong');strong.textContent=products.length?'No matching products':'Your farm shop is ready';e.append(strong,document.createTextNode(products.length?'Try another search or filter.':'Add your first vegetable using the form.'));list.append(e);return}
-for(const p of filtered){const row=document.createElement('article');row.className='product';const photo=document.createElement('div');photo.className='product-img';if(p.image_url){const img=document.createElement('img');img.src=p.image_url;img.alt=p.name;img.loading='lazy';img.onerror=()=>{img.remove();photo.textContent='🥬'};photo.append(img)}else photo.textContent='🥬';
-const info=document.createElement('div');info.className='product-info';const title=document.createElement('strong');title.textContent=p.name;const details=document.createElement('small');details.textContent=p.category+' · ₹'+(p.price_paise/100).toFixed(2)+' / '+p.unit;const meta=document.createElement('div');meta.className='product-meta';const status=document.createElement('span');status.className='status'+(!p.is_available?' hidden':'')+(p.stock_quantity<=5?' low':'');status.textContent=!p.is_available?'Hidden':(p.stock_quantity===0?'Out of stock':(p.stock_quantity<=5?'Low stock':'Available'));const stock=document.createElement('small');stock.textContent='Stock: '+p.stock_quantity;meta.append(status,stock);info.append(title,details,meta);
-const actions=document.createElement('div');actions.className='product-actions';const edit=document.createElement('button');edit.type='button';edit.className='mini';edit.textContent='Edit';edit.addEventListener('click',()=>editProduct(p));const del=document.createElement('button');del.type='button';del.className='mini delete';del.textContent='Delete';del.addEventListener('click',async()=>{if(!confirm('Delete '+p.name+'? This cannot be undone.'))return;try{await api('/api/admin/products/'+p.id,{method:'DELETE'});say(p.name+' deleted.');await load()}catch(e){say(e.message,true)}});actions.append(edit,del);row.append(photo,info,actions);list.append(row)}
-document.querySelector('#listing-summary').textContent='Showing '+filtered.length+' of '+products.length+' products'}
-async function load(){list.innerHTML='<div class="empty">Loading your listings…</div>';try{const d=await api('/api/admin/products');products=Array.isArray(d.products)?d.products:[];updateStats();render()}catch(e){list.replaceChildren();const err=document.createElement('div');err.className='empty';const strong=document.createElement('strong');strong.textContent='Could not load products';err.append(strong,document.createTextNode(e.message));list.append(err);document.querySelector('#listing-summary').textContent='Inventory connection failed'}}
-form.addEventListener('submit',async e=>{e.preventDefault();const id=f.id.value,p={name:f.name.value.trim(),category:f.category.value,price_rupees:Number(f.price.value),stock_quantity:Number(f.stock.value),unit:f.unit.value,is_available:f.available.value==='true',description:f.description.value.trim(),image_url:f.image.value.trim()};try{await api(id?'/api/admin/products/'+id:'/api/admin/products',{method:id?'PUT':'POST',body:JSON.stringify(p)});say(id?'Product updated successfully.':'Vegetable added successfully.');reset();await load()}catch(err){say(err.message,true)}});
-document.querySelector('#cancel-edit').addEventListener('click',reset);document.querySelector('#clear-form').addEventListener('click',()=>{reset();message.textContent=''});document.querySelector('#product-search').addEventListener('input',render);document.querySelector('#listing-filter').addEventListener('change',render);load();
-</script>
-{% endif %}
-</div>
+
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
 </body>
 </html>
