@@ -1,4 +1,5 @@
-
+import uuid
+from werkzeug.utils import secure_filename
 import hmac
 import os
 from pathlib import Path
@@ -28,6 +29,21 @@ def create_app(test_config=None):
             app.instance_path,
             "freshkart.sqlite3",
         ),
+            app.config["UPLOAD_FOLDER"] = os.path.join(
+        app.root_path,
+        "static",
+        "uploads",
+        "products",
+    )
+
+    app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
+    ALLOWED_IMAGE_EXTENSIONS = {
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+    }
         SECRET_KEY=os.environ.get(
             "FRESHKART_SECRET_KEY",
             "",
