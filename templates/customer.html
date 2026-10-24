@@ -1,0 +1,1028 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FreshKart | Customer Dashboard</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f8f3;
+    color: #263b2b;
+}
+
+header {
+    background: white;
+    padding: 16px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    box-shadow: 0 2px 10px #00000008;
+}
+
+.logo {
+    color: #218838;
+    font-size: 25px;
+    font-weight: bold;
+}
+
+nav {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #444;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+nav button {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 25px 20px;
+}
+
+.hero {
+    background: linear-gradient(120deg, #e4f4df, #f5f9e8);
+    padding: 35px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    color: #17692a;
+    font-size: 30px;
+    margin-bottom: 12px;
+}
+
+.hero p {
+    color: #56705a;
+    line-height: 1.6;
+}
+
+.delivery {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.delivery span {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 30px;
+    color: #218838;
+    font-size: 14px;
+}
+
+.search {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.categories {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.categories button {
+    border: 1px solid #dce8d9;
+    background: white;
+    padding: 10px 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    color: #45614a;
+}
+
+.categories button.active {
+    background: #218838;
+    color: white;
+    border-color: #218838;
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.section-title h2 {
+    font-size: 22px;
+}
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 20px;
+}
+
+.product {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 15px #00000006;
+}
+
+.product-image {
+    height: 110px;
+    background: #edf6e8;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 55px;
+    margin-bottom: 15px;
+}
+
+.product h3 {
+    margin-bottom: 8px;
+}
+
+.product p {
+    color: #777;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.price {
+    color: #218838;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 12px 0;
+}
+
+.product button {
+    width: 100%;
+    background: #218838;
+    color: white;
+    padding: 11px;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.product button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+.panel {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    margin-top: 30px;
+}
+
+.panel h2 {
+    margin-bottom: 20px;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding: 12px 0;
+    flex-wrap: wrap;
+}
+
+.cart-item button {
+    border: none;
+    background: #f0f5ed;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.total {
+    font-size: 20px;
+    font-weight: bold;
+    color: #218838;
+    margin-top: 20px;
+}
+
+select, input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 9px;
+    margin: 10px 0 15px;
+    font-size: 15px;
+}
+
+.primary {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 13px 20px;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.order {
+    padding: 15px;
+    background: #f7faf5;
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+
+.order p {
+    margin-top: 8px;
+    color: #666;
+    font-size: 14px;
+}
+
+.message {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+footer {
+    text-align: center;
+    padding: 25px;
+    color: #888;
+}
+
+@media(max-width: 600px) {
+    header {
+        padding: 15px;
+    }
+
+    .hero {
+        padding: 25px;
+    }
+
+    .hero h1 {
+        font-size: 24px;
+    }
+
+    .container {
+        padding: 18px 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">🥬 FreshKart</div>
+
+    <nav>
+        <a href="#products">Vegetables</a>
+        <a href="#cart">My Cart</a>
+        <a href="#orders">My Orders</a>
+
+        <button onclick="logout()">Logout</button>
+    </nav>
+</header>
+
+<div class="container">
+
+    <section class="hero">
+        <h1>Fresh Vegetables, Directly from Farmers</h1>
+
+        <p>
+            Shop fresh vegetables from local farmers.
+            Choose your delivery day and order easily.
+        </p>
+
+        <div class="delivery">
+            <span>🚚 Wednesday Delivery</span>
+            <span>🚚 Sunday Delivery</span>
+        </div>
+    </section>
+
+    <input
+        type="search"
+        id="search"
+        class="search"
+        placeholder="🔍 Search vegetables..."
+    >
+
+    <div class="categories" id="categories">
+        <button class="active" data-category="all">All</button>
+        <button data-category="Vegetables">Vegetables</button>
+        <button data-category="Leafy">Leafy Greens</button>
+        <button data-category="Roots">Root Vegetables</button>
+        <button data-category="Fruits">Fruits</button>
+    </div>
+
+    <section id="products">
+
+        <div class="section-title">
+            <h2>Fresh Vegetables</h2>
+            <span id="productCount">Loading...</span>
+        </div>
+
+        <div class="products" id="productList"></div>
+
+    </section>
+
+    <section class="panel" id="cart">
+
+        <h2>🛒 My Cart</h2>
+
+        <div id="cartItems">
+            Your cart is empty.
+        </div>
+
+        <div class="total">
+            Total: ₹<span id="cartTotal">0.00</span>
+        </div>
+
+        <h3 style="margin-top:25px;">Delivery Schedule</h3>
+
+        <label for="deliveryDay">Choose Delivery Day</label>
+
+        <select id="deliveryDay">
+            <option value="">Select delivery day</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Sunday">Sunday</option>
+        </select>
+
+        <label for="deliveryAddress">Delivery Address</label>
+
+        <input
+            type="text"
+            id="deliveryAddress"
+            placeholder="Enter your delivery address"
+        >
+
+        <button class="primary" onclick="placeOrder()">
+            Place Order
+        </button>
+
+        <p class="message" id="cartMessage"></p>
+
+    </section>
+
+    <section class="panel" id="orders">
+
+        <h2>📦 My Orders</h2>
+
+        <div id="orderList">
+            Login to view your orders.
+        </div>
+
+        <button
+            class="primary"
+            onclick="loadOrders()"
+            style="margin-top:15px;"
+        >
+            Refresh Orders
+        </button>
+
+    </section>
+
+</div>
+
+<footer>
+    © 2026 FreshKart | Farmer to Customer
+</footer>
+
+<script>
+
+let products = [];
+let cart = [];
+let selectedCategory = "all";
+
+const productList =
+    document.getElementById("productList");
+
+const cartItems =
+    document.getElementById("cartItems");
+
+const cartTotal =
+    document.getElementById("cartTotal");
+
+const cartMessage =
+    document.getElementById("cartMessage");
+
+const orderList =
+    document.getElementById("orderList");
+
+
+function escapeHTML(value) {
+
+    return String(value ?? "").replace(/[&<>"']/g, function(char) {
+
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char];
+
+    });
+
+}
+
+
+function getProductName(product) {
+
+    return product.name || product.product_name || "Vegetable";
+
+}
+
+
+function getProductCategory(product) {
+
+    return product.category || "Vegetables";
+
+}
+
+
+function getProductPrice(product) {
+
+    return Number(product.price || 0);
+
+}
+
+
+function getProductStock(product) {
+
+    return Number(product.stock || 0);
+
+}
+
+
+function getProductUnit(product) {
+
+    return product.unit || "kg";
+
+}
+
+
+function getProductFarmer(product) {
+
+    return product.farmer_name || "Local Farmer";
+
+}
+
+
+function getProductEmoji(product) {
+
+    const name = getProductName(product).toLowerCase();
+
+    const emojis = {
+        tomato: "🍅",
+        potato: "🥔",
+        onion: "🧅",
+        carrot: "🥕",
+        cabbage: "🥬",
+        spinach: "🥬",
+        cucumber: "🥒",
+        cauliflower: "🥦",
+        broccoli: "🥦",
+        brinjal: "🍆",
+        eggplant: "🍆",
+        apple: "🍎",
+        banana: "🍌",
+        mango: "🥭",
+        chilli: "🌶️"
+    };
+
+    for (const key in emojis) {
+
+        if (name.includes(key)) {
+            return emojis[key];
+        }
+
+    }
+
+    return "🥗";
+
+}
+
+
+async function loadProducts() {
+
+    productList.innerHTML = "Loading vegetables...";
+
+    try {
+
+        const response = await fetch("/api/products");
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || "Unable to load products.");
+        }
+
+        products = Array.isArray(data) ? data : data.products || [];
+
+        renderProducts();
+
+    } catch (error) {
+
+        productList.innerHTML =
+            "<p>Unable to load vegetables. Please refresh.</p>";
+
+    }
+
+}
+
+
+function renderProducts() {
+
+    const search =
+        document.getElementById("search").value.toLowerCase().trim();
+
+    const filtered = products.filter(function(product) {
+
+        const name = getProductName(product).toLowerCase();
+
+        const category =
+            getProductCategory(product).toLowerCase();
+
+        const matchesSearch =
+            name.includes(search) || category.includes(search);
+
+        const matchesCategory =
+            selectedCategory === "all" ||
+            category === selectedCategory.toLowerCase();
+
+        return matchesSearch && matchesCategory;
+
+    });
+
+    document.getElementById("productCount").textContent =
+        filtered.length + " products";
+
+    if (!filtered.length) {
+
+        productList.innerHTML =
+            "<p>No vegetables found.</p>";
+
+        return;
+
+    }
+
+    productList.innerHTML = filtered.map(function(product) {
+
+        const id = Number(product.id);
+
+        const stock = getProductStock(product);
+
+        return `
+            <div class="product">
+
+                <div class="product-image">
+                    ${getProductEmoji(product)}
+                </div>
+
+                <h3>${escapeHTML(getProductName(product))}</h3>
+
+                <p>👨‍🌾 ${escapeHTML(getProductFarmer(product))}</p>
+
+                <p>Available: ${stock} ${escapeHTML(getProductUnit(product))}</p>
+
+                <div class="price">
+                    ₹${getProductPrice(product).toFixed(2)}
+                    / ${escapeHTML(getProductUnit(product))}
+                </div>
+
+                <button
+                    onclick="addToCart(${id})"
+                    ${stock <= 0 ? "disabled" : ""}
+                >
+                    ${stock <= 0 ? "Out of Stock" : "Add to Cart"}
+                </button>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+
+function addToCart(productId) {
+
+    const product = products.find(function(item) {
+
+        return Number(item.id) === Number(productId);
+
+    });
+
+    if (!product) {
+        return;
+    }
+
+    const stock = getProductStock(product);
+
+    const existing = cart.find(function(item) {
+
+        return item.id === Number(productId);
+
+    });
+
+    if (existing) {
+
+        if (existing.quantity >= stock) {
+
+            alert("You cannot add more than available stock.");
+
+            return;
+
+        }
+
+        existing.quantity++;
+
+    } else {
+
+        if (stock <= 0) {
+            alert("This product is out of stock.");
+            return;
+        }
+
+        cart.push({
+
+            id: Number(productId),
+
+            name: getProductName(product),
+
+            price: getProductPrice(product),
+
+            unit: getProductUnit(product),
+
+            quantity: 1,
+
+            stock: stock
+
+        });
+
+    }
+
+    renderCart();
+
+}
+
+
+function changeQuantity(productId, amount) {
+
+    const item = cart.find(function(item) {
+
+        return item.id === Number(productId);
+
+    });
+
+    if (!item) {
+        return;
+    }
+
+    item.quantity += amount;
+
+    if (item.quantity <= 0) {
+
+        cart = cart.filter(function(cartItem) {
+
+            return cartItem.id !== Number(productId);
+
+        });
+
+    } else if (item.quantity > item.stock) {
+
+        item.quantity = item.stock;
+
+        alert("Available stock limit reached.");
+
+    }
+
+    renderCart();
+
+}
+
+
+function renderCart() {
+
+    if (!cart.length) {
+
+        cartItems.innerHTML = "Your cart is empty.";
+
+        cartTotal.textContent = "0.00";
+
+        return;
+
+    }
+
+    cartItems.innerHTML = cart.map(function(item) {
+
+        return `
+            <div class="cart-item">
+
+                <div>
+                    <strong>${escapeHTML(item.name)}</strong>
+
+                    <p>
+                        ₹${item.price.toFixed(2)}
+                        × ${item.quantity} ${escapeHTML(item.unit)}
+                    </p>
+                </div>
+
+                <div>
+
+                    <button onclick="changeQuantity(${item.id}, -1)">
+                        −
+                    </button>
+
+                    <strong>${item.quantity}</strong>
+
+                    <button onclick="changeQuantity(${item.id}, 1)">
+                        +
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+    }).join("");
+
+    const total = cart.reduce(function(sum, item) {
+
+        return sum + item.price * item.quantity;
+
+    }, 0);
+
+    cartTotal.textContent = total.toFixed(2);
+
+}
+
+
+async function placeOrder() {
+
+    if (!cart.length) {
+
+        cartMessage.textContent = "Your cart is empty.";
+
+        cartMessage.style.color = "red";
+
+        return;
+
+    }
+
+    const deliveryDay =
+        document.getElementById("deliveryDay").value;
+
+    const deliveryAddress =
+        document.getElementById("deliveryAddress").value.trim();
+
+    if (!deliveryDay) {
+
+        cartMessage.textContent =
+            "Please select Wednesday or Sunday.";
+
+        cartMessage.style.color = "red";
+
+        return;
+
+    }
+
+    if (!deliveryAddress) {
+
+        cartMessage.textContent =
+            "Please enter your delivery address.";
+
+        cartMessage.style.color = "red";
+
+        return;
+
+    }
+
+    const items = cart.map(function(item) {
+
+        return {
+
+            product_id: item.id,
+
+            quantity: item.quantity
+
+        };
+
+    });
+
+    cartMessage.textContent = "Placing your order...";
+
+    cartMessage.style.color = "#666";
+
+    try {
+
+        const response = await fetch("/api/customer/orders", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                items: items,
+
+                delivery_day: deliveryDay,
+
+                delivery_address: deliveryAddress
+
+            })
+
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(data.error || "Order failed.");
+
+        }
+
+        cartMessage.textContent =
+            "Order placed successfully!";
+
+        cartMessage.style.color = "green";
+
+        cart = [];
+
+        renderCart();
+
+        await loadProducts();
+
+        await loadOrders();
+
+    } catch (error) {
+
+        cartMessage.textContent =
+            error.message || "Unable to place order.";
+
+        cartMessage.style.color = "red";
+
+    }
+
+}
+
+
+async function loadOrders() {
+
+    orderList.innerHTML = "Loading orders...";
+
+    try {
+
+        const response = await fetch("/api/customer/orders");
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(data.error || "Unable to load orders.");
+
+        }
+
+        const orders = Array.isArray(data) ? data : data.orders || [];
+
+        if (!orders.length) {
+
+            orderList.innerHTML = "You have no orders yet.";
+
+            return;
+
+        }
+
+        orderList.innerHTML = orders.map(function(order) {
+
+            return `
+                <div class="order">
+
+                    <strong>
+                        Order #${escapeHTML(order.id)}
+                    </strong>
+
+                    <p>
+                        Status:
+                        ${escapeHTML(order.status || "Pending")}
+                    </p>
+
+                    <p>
+                        Delivery:
+                        ${escapeHTML(order.delivery_day || "Not scheduled")}
+                    </p>
+
+                    <p>
+                        Total:
+                        ₹${Number(order.total || 0).toFixed(2)}
+                    </p>
+
+                    <p>
+                        Address:
+                        ${escapeHTML(order.delivery_address || "Not provided")}
+                    </p>
+
+                </div>
+            `;
+
+        }).join("");
+
+    } catch (error) {
+
+        orderList.innerHTML =
+            "Unable to load orders. Please login and try again.";
+
+    }
+
+}
+
+
+document.getElementById("search").addEventListener(
+    "input",
+    renderProducts
+);
+
+
+document.getElementById("categories").addEventListener(
+    "click",
+    function(event) {
+
+        const button = event.target.closest("button");
+
+        if (!button) {
+            return;
+        }
+
+        selectedCategory = button.dataset.category;
+
+        document.querySelectorAll(".categories button").forEach(
+            function(item) {
+
+                item.classList.toggle(
+                    "active",
+                    item === button
+                );
+
+            }
+        );
+
+        renderProducts();
+
+    }
+);
+
+
+async function logout() {
+
+    try {
+
+        await fetch("/api/logout", {
+            method: "POST"
+        });
+
+    } finally {
+
+        window.location.href = "/login";
+
+    }
+
+}
+
+
+loadProducts();
+
+loadOrders();
+
+</script>
+
+</body>
+</html>
