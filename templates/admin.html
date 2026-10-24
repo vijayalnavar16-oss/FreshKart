@@ -2,325 +2,1121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#075c3b">
-  <title>Fresh Kart | Admin Dashboard</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}">
+<title>FreshKart | Admin Dashboard</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f8f1;
+    color: #263b2b;
+}
+
+header {
+    background: white;
+    padding: 18px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    box-shadow: 0 2px 10px #00000008;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+    color: #218838;
+}
+
+nav {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: #444;
+    text-decoration: none;
+}
+
+nav button {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.container {
+    max-width: 1300px;
+    margin: auto;
+    padding: 25px 20px;
+}
+
+.hero {
+    background: linear-gradient(120deg, #e0f1d9, #f6f9e9);
+    padding: 30px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    color: #17692a;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    color: #657866;
+    line-height: 1.6;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.stat {
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px #00000005;
+}
+
+.stat h3 {
+    font-size: 14px;
+    color: #777;
+    margin-bottom: 12px;
+}
+
+.stat strong {
+    font-size: 28px;
+    color: #218838;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.tabs button {
+    background: white;
+    border: 1px solid #dce8d9;
+    padding: 12px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.tabs button.active {
+    background: #218838;
+    color: white;
+    border-color: #218838;
+}
+
+.panel {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+}
+
+.panel h2 {
+    margin-bottom: 20px;
+}
+
+.search {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 650px;
+}
+
+th, td {
+    padding: 14px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+th {
+    background: #f5f8f2;
+    color: #45614a;
+}
+
+.action {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    margin: 3px;
+}
+
+.activate {
+    background: #e4f4df;
+    color: #218838;
+}
+
+.deactivate {
+    background: #fde9e7;
+    color: #c0392b;
+}
+
+.status {
+    background: #eef5e9;
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+select {
+    padding: 9px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+}
+
+.primary {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.message {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.empty {
+    color: #777;
+    padding: 15px 0;
+}
+
+footer {
+    text-align: center;
+    color: #888;
+    padding: 25px;
+}
+
+@media(max-width: 600px) {
+
+    header {
+        padding: 15px;
+    }
+
+    .container {
+        padding: 18px 12px;
+    }
+
+    .panel {
+        padding: 18px;
+    }
+
+}
+
+</style>
+
 </head>
 
-<body class="admin-page">
+<body>
 
-<div class="admin-shell">
+<header>
 
-  <!-- SIDEBAR -->
-  <aside class="admin-sidebar">
-    <a href="/admin" class="admin-brand">
-      <span class="admin-logo">🌿</span>
-      <span>
-        <strong>Fresh Kart</strong>
-        <small>ADMIN CONSOLE</small>
-      </span>
-    </a>
-
-    <div class="admin-profile-mini">
-      <div class="admin-avatar">👨‍💼</div>
-      <div>
-        <strong>Administrator</strong>
-        <small>Store Management</small>
-      </div>
-      <span class="online-dot"></span>
+    <div class="logo">
+        🥬 FreshKart Admin
     </div>
 
-    <nav class="admin-nav">
-      <p class="nav-heading">WORKSPACE</p>
-      <a class="admin-nav-link active" href="#overview">▦ <span>Dashboard</span></a>
-      <a class="admin-nav-link" href="#products">🥬 <span>Products</span></a>
-      <a class="admin-nav-link" href="#orders">▤ <span>Orders</span></a>
-      <a class="admin-nav-link" href="#farmers">🌾 <span>Farmers</span></a>
-      <a class="admin-nav-link" href="#customers">♙ <span>Customers</span></a>
+    <nav>
 
-      <p class="nav-heading">MANAGEMENT</p>
-      <a class="admin-nav-link" href="#inventory">▣ <span>Inventory</span></a>
-      <a class="admin-nav-link" href="#payments">₹ <span>Payments</span></a>
-      <a class="admin-nav-link" href="#reports">▥ <span>Reports</span></a>
-      <a class="admin-nav-link" href="#settings">⚙ <span>Settings</span></a>
+        <a href="#dashboard">Dashboard</a>
+
+        <a href="#management">Management</a>
+
+        <button onclick="logout()">Logout</button>
+
     </nav>
 
-    <div class="admin-sidebar-bottom">
-      <div class="admin-support">
-        <span>💬</span>
-        <strong>Need assistance?</strong>
-        <small>Manage your store efficiently.</small>
-      </div>
-      <a href="/" class="admin-logout">↩ <span>Back to Store</span></a>
-    </div>
-  </aside>
+</header>
 
-  <!-- MAIN CONTENT -->
-  <main class="admin-main" id="overview">
 
-    <header class="admin-topbar">
-      <button class="admin-mobile-menu" id="admin-menu-toggle"
-              type="button" aria-label="Toggle navigation">☰</button>
+<div class="container">
 
-      <div class="admin-breadcrumb">
-        <span>Workspace</span> / <strong>Dashboard</strong>
-      </div>
+    <section class="hero" id="dashboard">
 
-      <div class="admin-top-actions">
-        <span class="admin-date" id="admin-date">Today</span>
-        <button class="admin-icon-btn" type="button"
-                aria-label="Notifications">♧</button>
-        <button class="admin-user-btn" type="button">
-          <span class="admin-avatar small">👨‍💼</span>
-          <span class="admin-user-name">Admin</span>
-          <span>⌄</span>
-        </button>
-      </div>
-    </header>
+        <h1>Administrator Dashboard</h1>
 
-    <section class="admin-content">
-
-      <div class="admin-welcome">
-        <div>
-          <span class="admin-eyebrow">FRESH KART MANAGEMENT</span>
-          <h1>Good day, Admin 👋</h1>
-          <p>Here's what's happening with your farm-to-customer store.</p>
-        </div>
-        <button class="admin-primary-btn" type="button"
-                onclick="window.print()">⇩ Export Dashboard</button>
-      </div>
-
-      <!-- STATISTICS -->
-      <div class="admin-stats">
-        <article class="admin-stat-card">
-          <div class="stat-top">
-            <span>Total Revenue</span>
-            <span class="stat-icon green">₹</span>
-          </div>
-          <h2 id="stat-revenue">₹0</h2>
-          <p>From recorded orders</p>
-        </article>
-
-        <article class="admin-stat-card">
-          <div class="stat-top">
-            <span>Total Orders</span>
-            <span class="stat-icon orange">▤</span>
-          </div>
-          <h2 id="stat-orders">0</h2>
-          <p>All recorded orders</p>
-        </article>
-
-        <article class="admin-stat-card">
-          <div class="stat-top">
-            <span>Products</span>
-            <span class="stat-icon purple">🥬</span>
-          </div>
-          <h2 id="stat-products">0</h2>
-          <p>Listed in your store</p>
-        </article>
-
-        <article class="admin-stat-card">
-          <div class="stat-top">
-            <span>Customers</span>
-            <span class="stat-icon blue">♙</span>
-          </div>
-          <h2 id="stat-customers">0</h2>
-          <p>Registered customers</p>
-        </article>
-      </div>
-
-      <!-- QUICK ACTIONS -->
-      <section class="admin-panel">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Quick Actions</h2>
-            <p>Frequently used management tools</p>
-          </div>
-        </div>
-
-        <div class="admin-quick-actions">
-          <a href="#products" class="admin-action-card">
-            <span class="action-icon green">＋</span>
-            <strong>Manage Products</strong>
-            <small>Add or update vegetables</small>
-            <span class="action-arrow">↗</span>
-          </a>
-
-          <a href="#orders" class="admin-action-card">
-            <span class="action-icon orange">▤</span>
-            <strong>Manage Orders</strong>
-            <small>Review customer orders</small>
-            <span class="action-arrow">↗</span>
-          </a>
-
-          <a href="#farmers" class="admin-action-card">
-            <span class="action-icon purple">🌾</span>
-            <strong>Manage Farmers</strong>
-            <small>Farmer information</small>
-            <span class="action-arrow">↗</span>
-          </a>
-
-          <a href="#reports" class="admin-action-card">
-            <span class="action-icon blue">▥</span>
-            <strong>View Reports</strong>
-            <small>Sales and store activity</small>
-            <span class="action-arrow">↗</span>
-          </a>
-        </div>
-      </section>
-
-      <!-- RECENT ORDERS -->
-      <section class="admin-panel" id="orders">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Recent Orders</h2>
-            <p>Latest customer purchases</p>
-          </div>
-          <button class="admin-outline-btn" type="button"
-                  id="refresh-admin">↻ Refresh</button>
-        </div>
-
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="admin-orders-body">
-              <tr>
-                <td colspan="5" class="admin-table-empty">
-                  Connect your existing order data to display orders here.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- PRODUCT MANAGEMENT -->
-      <section class="admin-panel" id="products">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Product Management</h2>
-            <p>Review your vegetable catalogue</p>
-          </div>
-          <a href="/" class="admin-outline-btn">View Store ↗</a>
-        </div>
-        <div id="admin-product-list" class="admin-product-list">
-          <p class="admin-table-empty">
-            Your existing product records will appear here after connecting
-            the product data source.
-          </p>
-        </div>
-      </section>
-
-      <div class="admin-lower-grid">
-        <section class="admin-panel" id="farmers">
-          <div class="admin-panel-heading">
-            <div>
-              <h2>Farmer Management</h2>
-              <p>Your farming partners</p>
-            </div>
-          </div>
-          <div class="admin-placeholder">
-            <span>🌾</span>
-            <strong>Farmer Directory</strong>
-            <p>Connect your farmer records to manage registrations and details.</p>
-          </div>
-        </section>
-
-        <section class="admin-panel" id="customers">
-          <div class="admin-panel-heading">
-            <div>
-              <h2>Customer Management</h2>
-              <p>Customer accounts</p>
-            </div>
-          </div>
-          <div class="admin-placeholder">
-            <span>👥</span>
-            <strong>Customer Directory</strong>
-            <p>Connect your customer records to view registered customers.</p>
-          </div>
-        </section>
-      </div>
-
-      <section class="admin-panel" id="inventory">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Inventory Overview</h2>
-            <p>Stock monitoring</p>
-          </div>
-        </div>
-        <div class="admin-placeholder">
-          <span>📦</span>
-          <strong>Inventory Management</strong>
-          <p>Stock quantities will appear when connected to your product inventory.</p>
-        </div>
-      </section>
-
-      <section class="admin-panel" id="payments">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Payments</h2>
-            <p>Order payment overview</p>
-          </div>
-        </div>
-        <div class="admin-placeholder">
-          <span>₹</span>
-          <strong>Payment Records</strong>
-          <p>Connect your payment records before displaying financial totals.</p>
-        </div>
-      </section>
-
-      <section class="admin-panel" id="reports">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Reports & Analytics</h2>
-            <p>Business performance</p>
-          </div>
-        </div>
-        <div class="admin-placeholder">
-          <span>📊</span>
-          <strong>Store Analytics</strong>
-          <p>Reports will use your real order and payment data once connected.</p>
-        </div>
-      </section>
-
-      <section class="admin-panel" id="settings">
-        <div class="admin-panel-heading">
-          <div>
-            <h2>Store Settings</h2>
-            <p>Configuration</p>
-          </div>
-        </div>
-        <div class="admin-placeholder">
-          <span>⚙️</span>
-          <strong>Fresh Kart Configuration</strong>
-          <p>Store settings and account controls can be added to your existing backend.</p>
-        </div>
-      </section>
-
-      <footer class="admin-footer">
-        <span>🌿 Fresh Kart</span>
-        <span>Farmer to Customer · Avaradhi, Belagavi</span>
-      </footer>
+        <p>
+            Manage FreshKart customers, farmers, products,
+            and customer orders from one place.
+        </p>
 
     </section>
-  </main>
+
+
+    <section class="stats">
+
+        <div class="stat">
+
+            <h3>Total Customers</h3>
+
+            <strong id="customerCount">0</strong>
+
+        </div>
+
+        <div class="stat">
+
+            <h3>Total Farmers</h3>
+
+            <strong id="farmerCount">0</strong>
+
+        </div>
+
+        <div class="stat">
+
+            <h3>Total Products</h3>
+
+            <strong id="productCount">0</strong>
+
+        </div>
+
+        <div class="stat">
+
+            <h3>Total Orders</h3>
+
+            <strong id="orderCount">0</strong>
+
+        </div>
+
+    </section>
+
+
+    <section id="management">
+
+        <div class="tabs">
+
+            <button
+                class="active"
+                data-section="customers"
+            >
+                Customers
+            </button>
+
+            <button
+                data-section="farmers"
+            >
+                Farmers
+            </button>
+
+            <button
+                data-section="products"
+            >
+                Products
+            </button>
+
+            <button
+                data-section="orders"
+            >
+                Orders
+            </button>
+
+        </div>
+
+
+        <div class="panel">
+
+            <div id="sectionTitle">
+
+                <h2>Customer Management</h2>
+
+            </div>
+
+            <input
+                type="search"
+                id="search"
+                class="search"
+                placeholder="Search..."
+            >
+
+            <div class="table-wrap">
+
+                <table>
+
+                    <thead id="tableHead"></thead>
+
+                    <tbody id="tableBody">
+
+                        <tr>
+                            <td>Loading...</td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <p class="message" id="message"></p>
+
+        </div>
+
+    </section>
+
 </div>
 
-<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+
+<footer>
+
+    © 2026 FreshKart | Administrator
+
+</footer>
+
+
+<script>
+
+let currentSection = "customers";
+
+let customers = [];
+
+let farmers = [];
+
+let products = [];
+
+let orders = [];
+
+
+const tableHead =
+    document.getElementById("tableHead");
+
+const tableBody =
+    document.getElementById("tableBody");
+
+const search =
+    document.getElementById("search");
+
+const message =
+    document.getElementById("message");
+
+
+function escapeHTML(value) {
+
+    return String(value ?? "").replace(/[&<>"']/g, function(char) {
+
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char];
+
+    });
+
+}
+
+
+function showMessage(text, color = "green") {
+
+    message.textContent = text;
+
+    message.style.color = color;
+
+}
+
+
+function updateStats(data) {
+
+    document.getElementById("customerCount").textContent =
+        data.customers ?? customers.length;
+
+    document.getElementById("farmerCount").textContent =
+        data.farmers ?? farmers.length;
+
+    document.getElementById("productCount").textContent =
+        data.products ?? products.length;
+
+    document.getElementById("orderCount").textContent =
+        data.orders ?? orders.length;
+
+}
+
+
+async function loadDashboard() {
+
+    try {
+
+        const response = await fetch("/api/admin/dashboard");
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to load dashboard."
+            );
+
+        }
+
+        updateStats(data);
+
+    } catch (error) {
+
+        showMessage(error.message, "red");
+
+    }
+
+}
+
+
+async function loadSection() {
+
+    tableBody.innerHTML =
+        '<tr><td>Loading...</td></tr>';
+
+    message.textContent = "";
+
+    try {
+
+        let endpoint = "";
+
+        if (currentSection === "customers") {
+
+            endpoint = "/api/admin/customers";
+
+        } else if (currentSection === "farmers") {
+
+            endpoint = "/api/admin/farmers";
+
+        } else if (currentSection === "products") {
+
+            endpoint = "/api/admin/products";
+
+        } else {
+
+            endpoint = "/api/admin/orders";
+
+        }
+
+
+        const response = await fetch(endpoint);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to load data."
+            );
+
+        }
+
+
+        if (currentSection === "customers") {
+
+            customers = Array.isArray(data)
+                ? data
+                : data.customers || [];
+
+        } else if (currentSection === "farmers") {
+
+            farmers = Array.isArray(data)
+                ? data
+                : data.farmers || [];
+
+        } else if (currentSection === "products") {
+
+            products = Array.isArray(data)
+                ? data
+                : data.products || [];
+
+        } else {
+
+            orders = Array.isArray(data)
+                ? data
+                : data.orders || [];
+
+        }
+
+
+        renderSection();
+
+        await loadDashboard();
+
+    } catch (error) {
+
+        tableBody.innerHTML =
+            '<tr><td>Unable to load data.</td></tr>';
+
+        showMessage(error.message, "red");
+
+    }
+
+}
+
+
+function switchSection(section) {
+
+    currentSection = section;
+
+    search.value = "";
+
+    document.querySelectorAll(".tabs button").forEach(
+        function(button) {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.section === section
+            );
+
+        }
+    );
+
+
+    const titles = {
+
+        customers: "Customer Management",
+
+        farmers: "Farmer Management",
+
+        products: "Product Management",
+
+        orders: "Order Management"
+
+    };
+
+
+    document.getElementById("sectionTitle").innerHTML =
+        "<h2>" + titles[section] + "</h2>";
+
+    loadSection();
+
+}
+
+
+function renderSection() {
+
+    if (currentSection === "customers") {
+
+        renderUsers(customers);
+
+    } else if (currentSection === "farmers") {
+
+        renderUsers(farmers);
+
+    } else if (currentSection === "products") {
+
+        renderProducts();
+
+    } else {
+
+        renderOrders();
+
+    }
+
+}
+
+
+function renderUsers(users) {
+
+    const query = search.value.toLowerCase().trim();
+
+    const filtered = users.filter(function(user) {
+
+        return [
+
+            user.name,
+
+            user.username,
+
+            user.email,
+
+            user.phone
+
+        ].some(function(value) {
+
+            return String(value || "")
+                .toLowerCase()
+                .includes(query);
+
+        });
+
+    });
+
+
+    tableHead.innerHTML = `
+
+        <tr>
+
+            <th>ID</th>
+
+            <th>Name</th>
+
+            <th>Username</th>
+
+            <th>Email</th>
+
+            <th>Phone</th>
+
+            <th>Status</th>
+
+            <th>Action</th>
+
+        </tr>
+
+    `;
+
+
+    if (!filtered.length) {
+
+        tableBody.innerHTML =
+            '<tr><td colspan="7">No users found.</td></tr>';
+
+        return;
+
+    }
+
+
+    tableBody.innerHTML = filtered.map(function(user) {
+
+        const active = user.is_active !== 0;
+
+        return `
+
+            <tr>
+
+                <td>${escapeHTML(user.id)}</td>
+
+                <td>${escapeHTML(user.name)}</td>
+
+                <td>${escapeHTML(user.username)}</td>
+
+                <td>${escapeHTML(user.email || "-")}</td>
+
+                <td>${escapeHTML(user.phone || "-")}</td>
+
+                <td>
+
+                    <span class="status">
+
+                        ${active ? "Active" : "Inactive"}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <button
+                        class="action ${active ? "deactivate" : "activate"}"
+                        onclick="toggleUser(${Number(user.id)}, ${active})"
+                    >
+
+                        ${active ? "Deactivate" : "Activate"}
+
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }).join("");
+
+}
+
+
+function renderProducts() {
+
+    const query = search.value.toLowerCase().trim();
+
+    const filtered = products.filter(function(product) {
+
+        return [
+
+            product.name,
+
+            product.category,
+
+            product.farmer_name
+
+        ].some(function(value) {
+
+            return String(value || "")
+                .toLowerCase()
+                .includes(query);
+
+        });
+
+    });
+
+
+    tableHead.innerHTML = `
+
+        <tr>
+
+            <th>ID</th>
+
+            <th>Product</th>
+
+            <th>Farmer</th>
+
+            <th>Category</th>
+
+            <th>Price</th>
+
+            <th>Stock</th>
+
+        </tr>
+
+    `;
+
+
+    if (!filtered.length) {
+
+        tableBody.innerHTML =
+            '<tr><td colspan="6">No products found.</td></tr>';
+
+        return;
+
+    }
+
+
+    tableBody.innerHTML = filtered.map(function(product) {
+
+        return `
+
+            <tr>
+
+                <td>${escapeHTML(product.id)}</td>
+
+                <td>${escapeHTML(product.name)}</td>
+
+                <td>${escapeHTML(product.farmer_name || "-")}</td>
+
+                <td>${escapeHTML(product.category || "-")}</td>
+
+                <td>₹${Number(product.price || 0).toFixed(2)}</td>
+
+                <td>${escapeHTML(product.stock ?? 0)}</td>
+
+            </tr>
+
+        `;
+
+    }).join("");
+
+}
+
+
+function renderOrders() {
+
+    const query = search.value.toLowerCase().trim();
+
+    const filtered = orders.filter(function(order) {
+
+        return [
+
+            order.id,
+
+            order.customer_name,
+
+            order.farmer_name,
+
+            order.status,
+
+            order.delivery_day
+
+        ].some(function(value) {
+
+            return String(value || "")
+                .toLowerCase()
+                .includes(query);
+
+        });
+
+    });
+
+
+    tableHead.innerHTML = `
+
+        <tr>
+
+            <th>Order ID</th>
+
+            <th>Customer</th>
+
+            <th>Farmer</th>
+
+            <th>Total</th>
+
+            <th>Delivery</th>
+
+            <th>Status</th>
+
+            <th>Update</th>
+
+        </tr>
+
+    `;
+
+
+    if (!filtered.length) {
+
+        tableBody.innerHTML =
+            '<tr><td colspan="7">No orders found.</td></tr>';
+
+        return;
+
+    }
+
+
+    tableBody.innerHTML = filtered.map(function(order) {
+
+        return `
+
+            <tr>
+
+                <td>${escapeHTML(order.id)}</td>
+
+                <td>${escapeHTML(order.customer_name || "-")}</td>
+
+                <td>${escapeHTML(order.farmer_name || "-")}</td>
+
+                <td>₹${Number(order.total || 0).toFixed(2)}</td>
+
+                <td>${escapeHTML(order.delivery_day || "-")}</td>
+
+                <td>${escapeHTML(order.status || "Pending")}</td>
+
+                <td>
+
+                    <select id="orderStatus-${Number(order.id)}">
+
+                        <option value="Pending">Pending</option>
+
+                        <option value="Confirmed">Confirmed</option>
+
+                        <option value="Preparing">Preparing</option>
+
+                        <option value="Out for Delivery">Out for Delivery</option>
+
+                        <option value="Delivered">Delivered</option>
+
+                        <option value="Cancelled">Cancelled</option>
+
+                    </select>
+
+                    <button
+                        class="action activate"
+                        onclick="updateOrder(${Number(order.id)})"
+                    >
+
+                        Update
+
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }).join("");
+
+}
+
+
+async function toggleUser(userId, currentlyActive) {
+
+    const action = currentlyActive
+        ? "deactivate"
+        : "activate";
+
+    const confirmed = confirm(
+        "Are you sure you want to " + action + " this account?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const response = await fetch(
+            "/api/admin/users/" + userId + "/status",
+            {
+
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    is_active: !currentlyActive
+
+                })
+
+            }
+        );
+
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to update user."
+            );
+
+        }
+
+
+        showMessage(
+            "User account updated successfully."
+        );
+
+        await loadSection();
+
+    } catch (error) {
+
+        showMessage(error.message, "red");
+
+    }
+
+}
+
+
+async function updateOrder(orderId) {
+
+    const select = document.getElementById(
+        "orderStatus-" + orderId
+    );
+
+    const status = select.value;
+
+
+    try {
+
+        const response = await fetch(
+            "/api/admin/orders/" + orderId + "/status",
+            {
+
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    status: status
+
+                })
+
+            }
+        );
+
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to update order."
+            );
+
+        }
+
+
+        showMessage(
+            "Order status updated successfully."
+        );
+
+        await loadSection();
+
+    } catch (error) {
+
+        showMessage(error.message, "red");
+
+    }
+
+}
+
+
+document.querySelector(".tabs").addEventListener(
+    "click",
+    function(event) {
+
+        const button = event.target.closest("button");
+
+        if (!button) {
+            return;
+        }
+
+        switchSection(button.dataset.section);
+
+    }
+);
+
+
+search.addEventListener("input", renderSection);
+
+
+async function logout() {
+
+    try {
+
+        await fetch("/api/logout", {
+            method: "POST"
+        });
+
+    } finally {
+
+        window.location.href = "/login";
+
+    }
+
+}
+
+
+loadDashboard();
+
+loadSection();
+
+</script>
+
 </body>
+
 </html>
