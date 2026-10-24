@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshKart | Login</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f8f1;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo h1 {
+            color: #218838;
+            font-size: 32px;
+        }
+
+        .logo p {
+            color: #777;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #218838;
+            font-size: 14px;
+        }
+
+        h2 {
+            color: #263b2b;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 18px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: #218838;
+            box-shadow: 0 0 0 2px rgba(33, 136, 56, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #218838;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #17692a;
+        }
+
+        button:disabled {
+            background: #9bbda3;
+            cursor: not-allowed;
+        }
+
+        #message {
+            margin-top: 15px;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .register {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .register a {
+            color: #218838;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <a href="/" class="back">← Back to FreshKart</a>
+
+    <div class="logo">
+        <h1>🥬 FreshKart</h1>
+        <p>Fresh vegetables directly from farmers</p>
+    </div>
+
+    <h2>Welcome Back!</h2>
+    <p class="subtitle">Login to your FreshKart account</p>
+
+    <form id="loginForm">
+
+        <label for="role">Login As</label>
+
+        <select id="role" required>
+            <option value="customer">Customer</option>
+            <option value="farmer">Farmer</option>
+            <option value="admin">Administrator</option>
+        </select>
+
+        <label for="username">Username</label>
+
+        <input
+            type="text"
+            id="username"
+            placeholder="Enter your username"
+            autocomplete="username"
+            required
+        >
+
+        <label for="password">Password</label>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button type="submit" id="loginButton">
+            Login
+        </button>
+
+        <p id="message"></p>
+
+    </form>
+
+    <div class="register">
+        Don't have an account?
+        <a href="/register">Create Account</a>
+    </div>
+
+    <div class="footer">
+        © 2026 FreshKart | Farmer to Customer
+    </div>
+
+</div>
+
+<script>
+    const loginForm = document.getElementById("loginForm");
+    const message = document.getElementById("message");
+    const loginButton = document.getElementById("loginButton");
+
+    loginForm.addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const username =
+            document.getElementById("username").value.trim();
+
+        const password =
+            document.getElementById("password").value;
+
+        const selectedRole =
+            document.getElementById("role").value;
+
+        message.textContent = "Logging in...";
+        message.style.color = "#666";
+
+        loginButton.disabled = true;
+        loginButton.textContent = "Please wait...";
+
+        try {
+
+            const response = await fetch("/api/login", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || "Login failed");
+            }
+
+            if (!data.user || data.user.role !== selectedRole) {
+
+                await fetch("/api/logout", {
+                    method: "POST"
+                });
+
+                throw new Error(
+                    "This account does not belong to the selected role."
+                );
+            }
+
+            message.textContent = "Login successful!";
+            message.style.color = "green";
+
+            if (data.user.role === "admin") {
+
+                window.location.href = "/admin";
+
+            } else if (data.user.role === "farmer") {
+
+                window.location.href = "/farmer";
+
+            } else {
+
+                window.location.href = "/customer";
+
+            }
+
+        } catch (error) {
+
+            message.textContent =
+                error.message || "Unable to connect to the server.";
+
+            message.style.color = "red";
+
+        } finally {
+
+            loginButton.disabled = false;
+            loginButton.textContent = "Login";
+
+        }
+
+    });
+</script>
+
+</body>
+</html>
