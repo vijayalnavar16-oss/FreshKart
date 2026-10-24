@@ -1,0 +1,1135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FreshKart | Farmer Dashboard</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f8f1;
+    color: #263b2b;
+}
+
+header {
+    background: white;
+    padding: 18px 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    box-shadow: 0 2px 10px #00000008;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+    color: #218838;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #444;
+}
+
+nav button {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 25px 20px;
+}
+
+.hero {
+    background: linear-gradient(120deg, #e0f1d9, #f6f9e9);
+    padding: 30px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+}
+
+.hero h1 {
+    color: #17692a;
+    margin-bottom: 12px;
+}
+
+.hero p {
+    color: #657866;
+    line-height: 1.6;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.stat {
+    background: white;
+    padding: 22px;
+    border-radius: 15px;
+    box-shadow: 0 3px 12px #00000005;
+}
+
+.stat h3 {
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.stat strong {
+    font-size: 25px;
+    color: #218838;
+}
+
+.panel {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+}
+
+.panel h2 {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 9px;
+    margin-bottom: 18px;
+    font-size: 15px;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+button {
+    cursor: pointer;
+}
+
+.primary {
+    background: #218838;
+    color: white;
+    border: none;
+    padding: 13px 18px;
+    border-radius: 9px;
+}
+
+.primary:hover {
+    background: #17692a;
+}
+
+.primary:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.product {
+    background: #f8faf6;
+    padding: 20px;
+    border-radius: 13px;
+    border: 1px solid #edf1e9;
+}
+
+.product h3 {
+    margin-bottom: 10px;
+}
+
+.product p {
+    color: #666;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.product-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.product-actions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+.edit {
+    background: #e6f1e2;
+    color: #218838;
+}
+
+.delete {
+    background: #fde9e7;
+    color: #c0392b;
+}
+
+.order {
+    padding: 18px;
+    background: #f8faf6;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.order p {
+    color: #666;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.order select {
+    margin-top: 15px;
+}
+
+.message {
+    margin-top: 15px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.empty {
+    color: #777;
+    padding: 15px 0;
+}
+
+footer {
+    text-align: center;
+    color: #888;
+    padding: 25px;
+}
+
+@media(max-width: 600px) {
+
+    header {
+        padding: 15px;
+    }
+
+    .container {
+        padding: 18px 12px;
+    }
+
+    .panel {
+        padding: 18px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+    <div class="logo">
+        🥬 FreshKart Farmer
+    </div>
+
+    <nav>
+
+        <a href="#dashboard">Dashboard</a>
+
+        <a href="#products">My Products</a>
+
+        <a href="#orders">My Orders</a>
+
+        <button onclick="logout()">Logout</button>
+
+    </nav>
+
+</header>
+
+
+<div class="container">
+
+    <section class="hero" id="dashboard">
+
+        <h1>Welcome, Farmer! 🌱</h1>
+
+        <p>
+            Manage your vegetables, update stock,
+            and receive orders directly from customers.
+        </p>
+
+    </section>
+
+
+    <section class="stats">
+
+        <div class="stat">
+
+            <h3>My Products</h3>
+
+            <strong id="totalProducts">0</strong>
+
+        </div>
+
+        <div class="stat">
+
+            <h3>Available Stock</h3>
+
+            <strong id="totalStock">0</strong>
+
+        </div>
+
+        <div class="stat">
+
+            <h3>My Orders</h3>
+
+            <strong id="totalOrders">0</strong>
+
+        </div>
+
+    </section>
+
+
+    <section class="panel">
+
+        <h2>➕ Add Vegetable</h2>
+
+        <form id="productForm">
+
+            <label for="name">Vegetable Name</label>
+
+            <input
+                type="text"
+                id="name"
+                placeholder="Example: Tomato"
+                required
+            >
+
+            <label for="category">Category</label>
+
+            <select id="category" required>
+
+                <option value="Vegetables">Vegetables</option>
+
+                <option value="Leafy">Leafy Greens</option>
+
+                <option value="Roots">Root Vegetables</option>
+
+                <option value="Fruits">Fruits</option>
+
+            </select>
+
+            <label for="price">Price per Unit (₹)</label>
+
+            <input
+                type="number"
+                id="price"
+                min="0.01"
+                step="0.01"
+                placeholder="Example: 40"
+                required
+            >
+
+            <label for="unit">Unit</label>
+
+            <select id="unit" required>
+
+                <option value="kg">Kilogram (kg)</option>
+
+                <option value="piece">Piece</option>
+
+                <option value="bunch">Bunch</option>
+
+            </select>
+
+            <label for="stock">Available Stock</label>
+
+            <input
+                type="number"
+                id="stock"
+                min="0"
+                step="0.01"
+                placeholder="Example: 50"
+                required
+            >
+
+            <label for="description">Description</label>
+
+            <textarea
+                id="description"
+                placeholder="Describe your vegetable"
+            ></textarea>
+
+            <button
+                type="submit"
+                class="primary"
+                id="saveButton"
+            >
+                Add Product
+            </button>
+
+            <button
+                type="button"
+                class="primary"
+                id="cancelEdit"
+                style="display:none;background:#777;margin-left:8px;"
+                onclick="cancelEdit()"
+            >
+                Cancel Edit
+            </button>
+
+            <p class="message" id="productMessage"></p>
+
+        </form>
+
+    </section>
+
+
+    <section class="panel" id="products">
+
+        <h2>🥕 My Products</h2>
+
+        <div class="products" id="productList">
+
+            <p class="empty">Loading products...</p>
+
+        </div>
+
+    </section>
+
+
+    <section class="panel" id="orders">
+
+        <h2>📦 Customer Orders</h2>
+
+        <div id="orderList">
+
+            <p class="empty">Loading orders...</p>
+
+        </div>
+
+        <button
+            class="primary"
+            onclick="loadOrders()"
+        >
+            Refresh Orders
+        </button>
+
+        <p class="message" id="orderMessage"></p>
+
+    </section>
+
+</div>
+
+
+<footer>
+
+    © 2026 FreshKart | Farmer to Customer
+
+</footer>
+
+
+<script>
+
+let products = [];
+
+let orders = [];
+
+let editingProductId = null;
+
+
+const productList =
+    document.getElementById("productList");
+
+const orderList =
+    document.getElementById("orderList");
+
+const productMessage =
+    document.getElementById("productMessage");
+
+const orderMessage =
+    document.getElementById("orderMessage");
+
+
+function escapeHTML(value) {
+
+    return String(value ?? "").replace(/[&<>"']/g, function(char) {
+
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char];
+
+    });
+
+}
+
+
+function productName(product) {
+
+    return product.name || product.product_name || "Vegetable";
+
+}
+
+
+function productUnit(product) {
+
+    return product.unit || "kg";
+
+}
+
+
+function productStock(product) {
+
+    return Number(product.stock || 0);
+
+}
+
+
+function productPrice(product) {
+
+    return Number(product.price || 0);
+
+}
+
+
+async function loadProducts() {
+
+    productList.innerHTML =
+        '<p class="empty">Loading products...</p>';
+
+    try {
+
+        const response = await fetch("/api/farmer/products");
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to load products."
+            );
+
+        }
+
+        products = Array.isArray(data)
+            ? data
+            : data.products || [];
+
+        renderProducts();
+
+        updateStats();
+
+    } catch (error) {
+
+        productList.innerHTML =
+            '<p class="empty">Unable to load products.</p>';
+
+        productMessage.textContent = error.message;
+
+        productMessage.style.color = "red";
+
+    }
+
+}
+
+
+function renderProducts() {
+
+    if (!products.length) {
+
+        productList.innerHTML =
+            '<p class="empty">You have not added any products yet.</p>';
+
+        return;
+
+    }
+
+    productList.innerHTML = products.map(function(product) {
+
+        const id = Number(product.id);
+
+        return `
+            <div class="product">
+
+                <h3>
+                    ${escapeHTML(productName(product))}
+                </h3>
+
+                <p>
+                    Category:
+                    ${escapeHTML(product.category || "Vegetables")}
+                </p>
+
+                <p>
+                    Price:
+                    ₹${productPrice(product).toFixed(2)}
+                    / ${escapeHTML(productUnit(product))}
+                </p>
+
+                <p>
+                    Stock:
+                    ${productStock(product)}
+                    ${escapeHTML(productUnit(product))}
+                </p>
+
+                <p>
+                    ${escapeHTML(product.description || "")}
+                </p>
+
+                <div class="product-actions">
+
+                    <button
+                        class="edit"
+                        onclick="editProduct(${id})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        class="delete"
+                        onclick="deleteProduct(${id})"
+                    >
+                        Delete
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+
+function updateStats() {
+
+    document.getElementById("totalProducts").textContent =
+        products.length;
+
+    const stock = products.reduce(function(total, product) {
+
+        return total + productStock(product);
+
+    }, 0);
+
+    document.getElementById("totalStock").textContent =
+        stock.toFixed(2);
+
+    document.getElementById("totalOrders").textContent =
+        orders.length;
+
+}
+
+
+document.getElementById("productForm").addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        const name =
+            document.getElementById("name").value.trim();
+
+        const category =
+            document.getElementById("category").value;
+
+        const price =
+            Number(document.getElementById("price").value);
+
+        const unit =
+            document.getElementById("unit").value;
+
+        const stock =
+            Number(document.getElementById("stock").value);
+
+        const description =
+            document.getElementById("description").value.trim();
+
+
+        if (!name || price <= 0 || stock < 0) {
+
+            productMessage.textContent =
+                "Enter valid product details.";
+
+            productMessage.style.color = "red";
+
+            return;
+
+        }
+
+
+        const productData = {
+
+            name: name,
+
+            category: category,
+
+            price: price,
+
+            unit: unit,
+
+            stock: stock,
+
+            description: description
+
+        };
+
+
+        productMessage.textContent =
+            "Saving product...";
+
+        productMessage.style.color = "#666";
+
+
+        const saveButton =
+            document.getElementById("saveButton");
+
+        saveButton.disabled = true;
+
+
+        try {
+
+            const url = editingProductId
+                ? "/api/farmer/products/" + editingProductId
+                : "/api/farmer/products";
+
+            const method = editingProductId
+                ? "PUT"
+                : "POST";
+
+
+            const response = await fetch(url, {
+
+                method: method,
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify(productData)
+
+            });
+
+
+            const data = await response.json();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error || "Unable to save product."
+                );
+
+            }
+
+
+            productMessage.textContent =
+                editingProductId
+                    ? "Product updated successfully!"
+                    : "Product added successfully!";
+
+            productMessage.style.color = "green";
+
+
+            resetForm();
+
+            await loadProducts();
+
+
+        } catch (error) {
+
+            productMessage.textContent =
+                error.message || "Unable to connect to server.";
+
+            productMessage.style.color = "red";
+
+        } finally {
+
+            saveButton.disabled = false;
+
+        }
+
+    }
+);
+
+
+function editProduct(productId) {
+
+    const product = products.find(function(item) {
+
+        return Number(item.id) === Number(productId);
+
+    });
+
+    if (!product) {
+        return;
+    }
+
+    editingProductId = Number(productId);
+
+    document.getElementById("name").value =
+        productName(product);
+
+    document.getElementById("category").value =
+        product.category || "Vegetables";
+
+    document.getElementById("price").value =
+        productPrice(product);
+
+    document.getElementById("unit").value =
+        productUnit(product);
+
+    document.getElementById("stock").value =
+        productStock(product);
+
+    document.getElementById("description").value =
+        product.description || "";
+
+    document.getElementById("saveButton").textContent =
+        "Update Product";
+
+    document.getElementById("cancelEdit").style.display =
+        "inline-block";
+
+    productMessage.textContent =
+        "Editing: " + productName(product);
+
+    productMessage.style.color = "#218838";
+
+    document.getElementById("productForm").scrollIntoView({
+        behavior: "smooth"
+    });
+
+}
+
+
+function resetForm() {
+
+    editingProductId = null;
+
+    document.getElementById("productForm").reset();
+
+    document.getElementById("saveButton").textContent =
+        "Add Product";
+
+    document.getElementById("cancelEdit").style.display =
+        "none";
+
+}
+
+
+function cancelEdit() {
+
+    resetForm();
+
+    productMessage.textContent =
+        "Edit cancelled.";
+
+    productMessage.style.color = "#666";
+
+}
+
+
+async function deleteProduct(productId) {
+
+    const confirmed = confirm(
+        "Are you sure you want to delete this product?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            "/api/farmer/products/" + productId,
+            {
+                method: "DELETE"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to delete product."
+            );
+
+        }
+
+        productMessage.textContent =
+            "Product deleted successfully.";
+
+        productMessage.style.color = "green";
+
+        await loadProducts();
+
+    } catch (error) {
+
+        productMessage.textContent =
+            error.message || "Unable to delete product.";
+
+        productMessage.style.color = "red";
+
+    }
+
+}
+
+
+async function loadOrders() {
+
+    orderList.innerHTML =
+        '<p class="empty">Loading orders...</p>';
+
+    try {
+
+        const response = await fetch("/api/farmer/orders");
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to load orders."
+            );
+
+        }
+
+        orders = Array.isArray(data)
+            ? data
+            : data.orders || [];
+
+        renderOrders();
+
+        updateStats();
+
+    } catch (error) {
+
+        orderList.innerHTML =
+            '<p class="empty">Unable to load orders.</p>';
+
+        orderMessage.textContent = error.message;
+
+        orderMessage.style.color = "red";
+
+    }
+
+}
+
+
+function renderOrders() {
+
+    if (!orders.length) {
+
+        orderList.innerHTML =
+            '<p class="empty">No customer orders yet.</p>';
+
+        return;
+
+    }
+
+    orderList.innerHTML = orders.map(function(order) {
+
+        return `
+            <div class="order">
+
+                <h3>
+                    Order #${escapeHTML(order.id)}
+                </h3>
+
+                <p>
+                    Customer:
+                    ${escapeHTML(order.customer_name || "Customer")}
+                </p>
+
+                <p>
+                    Product:
+                    ${escapeHTML(order.product_name || "Vegetable")}
+                </p>
+
+                <p>
+                    Quantity:
+                    ${escapeHTML(order.quantity ?? 0)}
+                </p>
+
+                <p>
+                    Total:
+                    ₹${Number(order.total || 0).toFixed(2)}
+                </p>
+
+                <p>
+                    Delivery:
+                    ${escapeHTML(order.delivery_day || "Not scheduled")}
+                </p>
+
+                <p>
+                    Address:
+                    ${escapeHTML(order.delivery_address || "Not provided")}
+                </p>
+
+                <p>
+                    Current Status:
+                    ${escapeHTML(order.status || "Pending")}
+                </p>
+
+                <select id="status-${Number(order.id)}">
+
+                    <option value="Pending">Pending</option>
+
+                    <option value="Confirmed">Confirmed</option>
+
+                    <option value="Preparing">Preparing</option>
+
+                    <option value="Out for Delivery">Out for Delivery</option>
+
+                    <option value="Delivered">Delivered</option>
+
+                    <option value="Cancelled">Cancelled</option>
+
+                </select>
+
+                <button
+                    class="primary"
+                    onclick="updateOrderStatus(${Number(order.id)})"
+                >
+                    Update Status
+                </button>
+
+            </div>
+        `;
+
+    }).join("");
+
+}
+
+
+async function updateOrderStatus(orderId) {
+
+    const select =
+        document.getElementById("status-" + orderId);
+
+    const status = select.value;
+
+    orderMessage.textContent =
+        "Updating order status...";
+
+    orderMessage.style.color = "#666";
+
+    try {
+
+        const response = await fetch(
+            "/api/farmer/orders/" + orderId + "/status",
+            {
+
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    status: status
+                })
+
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.error || "Unable to update order."
+            );
+
+        }
+
+        orderMessage.textContent =
+            "Order status updated successfully.";
+
+        orderMessage.style.color = "green";
+
+        await loadOrders();
+
+    } catch (error) {
+
+        orderMessage.textContent =
+            error.message || "Unable to update order.";
+
+        orderMessage.style.color = "red";
+
+    }
+
+}
+
+
+async function logout() {
+
+    try {
+
+        await fetch("/api/logout", {
+            method: "POST"
+        });
+
+    } finally {
+
+        window.location.href = "/login";
+
+    }
+
+}
+
+
+loadProducts();
+
+loadOrders();
+
+</script>
+
+</body>
+
+</html>
