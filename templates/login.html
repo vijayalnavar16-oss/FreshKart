@@ -4,22 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshKart | Login</title>
+
+    <title>FreshKart Login</title>
 
     <style>
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
 
         body {
+            margin: 0;
             font-family: Arial, sans-serif;
             background: #f3f8f1;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
             padding: 20px;
         }
 
@@ -27,115 +27,69 @@
             width: 100%;
             max-width: 420px;
             background: white;
-            padding: 35px;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.08);
         }
 
         .logo {
             text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .logo h1 {
-            color: #218838;
-            font-size: 32px;
-        }
-
-        .logo p {
-            color: #777;
-            margin-top: 8px;
-            font-size: 14px;
-        }
-
-        .back {
-            display: inline-block;
-            margin-bottom: 20px;
-            text-decoration: none;
-            color: #218838;
-            font-size: 14px;
+            color: #238636;
+            font-size: 30px;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
 
         h2 {
-            color: #263b2b;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #777;
-            font-size: 14px;
+            text-align: center;
             margin-bottom: 25px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
+            margin-bottom: 7px;
             font-weight: bold;
-            font-size: 14px;
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 13px;
-            margin-bottom: 18px;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 15px;
-            outline: none;
-        }
-
-        input:focus, select:focus {
-            border-color: #218838;
-            box-shadow: 0 0 0 2px rgba(33, 136, 56, 0.1);
+            border-radius: 8px;
+            margin-bottom: 18px;
+            font-size: 16px;
         }
 
         button {
             width: 100%;
             padding: 14px;
-            background: #218838;
+            background: #238636;
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 16px;
-            font-weight: bold;
             cursor: pointer;
         }
 
-        button:hover {
-            background: #17692a;
-        }
-
         button:disabled {
-            background: #9bbda3;
-            cursor: not-allowed;
+            opacity: 0.6;
+            cursor: wait;
         }
 
         #message {
             margin-top: 15px;
-            font-size: 14px;
             text-align: center;
-            line-height: 1.5;
+            color: #b42318;
         }
 
-        .register {
+        .back {
             text-align: center;
-            margin-top: 22px;
-            font-size: 14px;
-            color: #666;
+            margin-top: 20px;
         }
 
-        .register a {
-            color: #218838;
+        .back a {
+            color: #238636;
             text-decoration: none;
-            font-weight: bold;
-        }
-
-        .footer {
-            text-align: center;
-            color: #999;
-            font-size: 12px;
-            margin-top: 25px;
         }
     </style>
 </head>
@@ -144,34 +98,20 @@
 
 <div class="login-container">
 
-    <a href="/" class="back">← Back to FreshKart</a>
+    <div class="logo">FreshKart</div>
 
-    <div class="logo">
-        <h1>🥬 FreshKart</h1>
-        <p>Fresh vegetables directly from farmers</p>
-    </div>
+    <h2>Login to your account</h2>
 
-    <h2>Welcome Back!</h2>
-    <p class="subtitle">Login to your FreshKart account</p>
-
-    <form id="loginForm">
-
-        <label for="role">Login As</label>
-
-        <select id="role" required>
-            <option value="customer">Customer</option>
-            <option value="farmer">Farmer</option>
-            <option value="admin">Administrator</option>
-        </select>
+    <form id="login-form">
 
         <label for="username">Username</label>
 
         <input
             type="text"
             id="username"
-            placeholder="Enter your username"
-            autocomplete="username"
+            name="username"
             required
+            autocomplete="username"
         >
 
         <label for="password">Password</label>
@@ -179,12 +119,12 @@
         <input
             type="password"
             id="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
+            name="password"
             required
+            autocomplete="current-password"
         >
 
-        <button type="submit" id="loginButton">
+        <button type="submit" id="login-button">
             Login
         </button>
 
@@ -192,107 +132,105 @@
 
     </form>
 
-    <div class="register">
-        Don't have an account?
-        <a href="/register">Create Account</a>
-    </div>
-
-    <div class="footer">
-        © 2026 FreshKart | Farmer to Customer
+    <div class="back">
+        <a href="/">Back to FreshKart</a>
     </div>
 
 </div>
 
 <script>
-    const loginForm = document.getElementById("loginForm");
-    const message = document.getElementById("message");
-    const loginButton = document.getElementById("loginButton");
 
-    loginForm.addEventListener("submit", async function(event) {
+const loginForm = document.getElementById("login-form");
 
-        event.preventDefault();
+const loginButton = document.getElementById("login-button");
 
-        const username =
-            document.getElementById("username").value.trim();
+const message = document.getElementById("message");
 
-        const password =
-            document.getElementById("password").value;
 
-        const selectedRole =
-            document.getElementById("role").value;
+loginForm.addEventListener("submit", async function(event) {
 
-        message.textContent = "Logging in...";
-        message.style.color = "#666";
+    event.preventDefault();
 
-        loginButton.disabled = true;
-        loginButton.textContent = "Please wait...";
+    const username = document
+        .getElementById("username")
+        .value
+        .trim();
 
-        try {
+    const password = document
+        .getElementById("password")
+        .value;
 
-            const response = await fetch("/api/login", {
+    message.textContent = "";
 
+    loginButton.disabled = true;
+
+    loginButton.textContent = "Logging in...";
+
+    try {
+
+        const response = await fetch(
+            "https://freshkart-j9d1.onrender.com/api/login",
+            {
                 method: "POST",
 
                 headers: {
                     "Content-Type": "application/json"
                 },
 
+                credentials: "include",
+
                 body: JSON.stringify({
                     username: username,
                     password: password
                 })
-
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || "Login failed");
             }
+        );
 
-            if (!data.user || data.user.role !== selectedRole) {
+        const data = await response.json();
 
-                await fetch("/api/logout", {
-                    method: "POST"
-                });
-
-                throw new Error(
-                    "This account does not belong to the selected role."
-                );
-            }
-
-            message.textContent = "Login successful!";
-            message.style.color = "green";
-
-            if (data.user.role === "admin") {
-
-                window.location.href = "/admin";
-
-            } else if (data.user.role === "farmer") {
-
-                window.location.href = "/farmer";
-
-            } else {
-
-                window.location.href = "/customer";
-
-            }
-
-        } catch (error) {
+        if (!response.ok || !data.success) {
 
             message.textContent =
-                error.message || "Unable to connect to the server.";
+                data.message || "Login failed";
 
-            message.style.color = "red";
+            return;
+        }
 
-        } finally {
+        if (data.user.role === "admin") {
 
-            loginButton.disabled = false;
-            loginButton.textContent = "Login";
+            window.location.href = "/admin.html";
+
+        } else if (data.user.role === "farmer") {
+
+            window.location.href = "/farmer.html";
+
+        } else if (data.user.role === "customer") {
+
+            window.location.href = "/customer.html";
+
+        } else {
+
+            message.textContent = "Invalid account role";
 
         }
 
-    });
+    } catch (error) {
+
+        console.error("Login error:", error);
+
+        message.textContent =
+            "Unable to connect to FreshKart. Please try again.";
+
+    } finally {
+
+        loginButton.disabled = false;
+
+        loginButton.textContent = "Login";
+
+    }
+
+});
+
 </script>
 
 </body>
