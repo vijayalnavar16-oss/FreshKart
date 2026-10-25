@@ -123,16 +123,11 @@ def product_json(product):
 # --------------------------------------------------
 # HOME AND HEALTH
 # --------------------------------------------------
+from flask import render_template
 
 @app.route("/")
 def home():
-    return response(
-        "FreshKart API is running",
-        True,
-        service="FreshKart",
-        version="1.0"
-    )
-
+    return render_template("index.html")
 
 @app.route("/api/health")
 def health():
