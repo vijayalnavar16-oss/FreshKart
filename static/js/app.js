@@ -284,7 +284,11 @@ document.querySelector("#close-cart").addEventListener("click", closeCart);
 document.querySelector("#continue-shopping").addEventListener("click", closeCart);
 cartBackdrop.addEventListener("click", closeCart);
 document.querySelector("#demo-checkout").addEventListener("click", () => showToast("Checkout arrives in a later FreshKart phase."));
-document.querySelector(".account-button").addEventListener("click", () => showToast("Customer accounts arrive in a later FreshKart phase."));
+
+document.querySelector(".account-button").addEventListener("click", () => {
+    window.location.href = "/login.html";
+});
+
 document.querySelector(".location-button").addEventListener("click", () => showToast("Location selection arrives in a later FreshKart phase."));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && cartDrawer.classList.contains("open")) closeCart();
