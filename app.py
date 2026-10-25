@@ -1,148 +1,152 @@
 
 import os
-import uuid
 import sqlite3
-from datetime import date, timedelta
 from functools import wraps
+from datetime import datetime, date
+from flask import Flask, request, jsonify, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
-from flask import (
-    Flask,
-    jsonify,
-    request,
-    session,
-    redirect,
-    render_template,
-    url_for
-)
-
-from werkzeug.security import check_password_hash
-
-from database import (
-    init_db,
-    get_db,
-    create_user,
-    get_user_by_username
-)
-
+from database import get_db, init_db, create_user
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = os.environ.get(
-    "FRESHKART_SECRET_KEY",
-    "development-secret-change-this"
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "change-this-secret-before-deployment"
 )
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 
 # --------------------------------------------------
-# DATABASE HELPERS
+# HELPERS
 # --------------------------------------------------
 
-def query_db(query, args=(), one=False):
-    connection = get_db()
-
-    try:
-        cursor = connection.execute(query, args)
-
-        if one:
-            return cursor.fetchone()
-
-        return cursor.fetchall()
-
-    finally:
-        connection.close()
+def response(message, success=True, **data):
+    result = {
+        "success": success,
+        "message": message
+    }
+    result.update(data)
+    return jsonify(result)
 
 
-def execute_db(query, args=()):
-    connection = get_db()
-
-    try:
-        cursor = connection.execute(query, args)
-
-        connection.commit()
-
-        return cursor.lastrowid
-
-    finally:
-        connection.close()
-
-
-def money_to_paise(value):
-    try:
-        value = float(value)
-
-        if value < 0:
-            raise ValueError
-
-        return round(value * 100)
-
-    except (TypeError, ValueError):
-        raise ValueError("Invalid price")
-
-
-def current_user():
+def get_current_user():
     user_id = session.get("user_id")
 
     if not user_id:
         return None
 
-    return query_db(
+    db = get_db()
+
+    user = db.execute(
         """
-        SELECT id, username, full_name, role, phone, email, address
+        SELECT id, username, full_name, phone, email,
+               role, address, is_active
         FROM users
         WHERE id = ?
-          AND is_active = 1
         """,
-        (user_id,),
-        one=True
-    )
+        (user_id,)
+    ).fetchone()
 
+    db.close()
 
-# --------------------------------------------------
-# AUTHENTICATION
-# --------------------------------------------------
+    return user
+
 
 def login_required(role=None):
-    def decorator(function):
-
-        @wraps(function)
+    def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
 
-            user = current_user()
+            user = get_current_user()
 
             if not user:
-                return jsonify({
-                    "success": False,
-                    "message": "Please login first"
-                }), 401
+                return response(
+                    "Please login first",
+                    False
+                ), 401
+
+            if not user["is_active"]:
+                session.clear()
+                return response(
+                    "Account is inactive",
+                    False
+                ), 403
 
             if role and user["role"] != role:
-                return jsonify({
-                    "success": False,
-                    "message": "Access denied"
-                }), 403
+                return response(
+                    "Access denied",
+                    False
+                ), 403
 
-            return function(*args, **kwargs)
+            return func(*args, **kwargs)
 
         return wrapper
-
     return decorator
 
 
+def user_json(user):
+    if not user:
+        return None
+
+    return {
+        "id": user["id"],
+        "username": user["username"],
+        "full_name": user["full_name"],
+        "phone": user["phone"],
+        "email": user["email"],
+        "role": user["role"],
+        "address": user["address"],
+        "is_active": user["is_active"]
+    }
+
+
+def product_json(product):
+    return {
+        "id": product["id"],
+        "farmer_id": product["farmer_id"],
+        "name": product["name"],
+        "category": product["category"],
+        "price": product["price_paise"] / 100,
+        "price_paise": product["price_paise"],
+        "stock_quantity": product["stock_quantity"],
+        "unit": product["unit"],
+        "description": product["description"],
+        "image_url": product["image_url"],
+        "is_available": product["is_available"]
+    }
+
+
+# --------------------------------------------------
+# HOME AND HEALTH
+# --------------------------------------------------
+
 @app.route("/")
-def index():
-    return render_template("index.html")
+def home():
+    return response(
+        "FreshKart API is running",
+        True,
+        service="FreshKart",
+        version="1.0"
+    )
 
 
 @app.route("/api/health")
 def health():
-    return jsonify({
-        "success": True,
-        "message": "FreshKart API is running"
-    })
+    return response(
+        "FreshKart backend is healthy",
+        True,
+        service="FreshKart"
+    )
 
+
+# --------------------------------------------------
+# REGISTER CUSTOMER OR FARMER
+# Admin creates customers/farmers separately.
+# --------------------------------------------------
 
 @app.route("/api/register", methods=["POST"])
 def register():
@@ -153,35 +157,29 @@ def register():
     password = str(data.get("password", ""))
     full_name = str(data.get("full_name", "")).strip()
 
-    role = str(data.get("role", "customer")).strip()
+    role = str(data.get("role", "customer")).strip().lower()
 
     phone = str(data.get("phone", "")).strip()
     email = str(data.get("email", "")).strip()
     address = str(data.get("address", "")).strip()
 
     if not username or not password or not full_name:
-        return jsonify({
-            "success": False,
-            "message": "Username, password and full name are required"
-        }), 400
-
-    if len(username) < 3:
-        return jsonify({
-            "success": False,
-            "message": "Username must contain at least 3 characters"
-        }), 400
+        return response(
+            "Username, password and full name are required",
+            False
+        ), 400
 
     if len(password) < 8:
-        return jsonify({
-            "success": False,
-            "message": "Password must contain at least 8 characters"
-        }), 400
+        return response(
+            "Password must contain at least 8 characters",
+            False
+        ), 400
 
     if role not in ("customer", "farmer"):
-        return jsonify({
-            "success": False,
-            "message": "Invalid registration role"
-        }), 400
+        return response(
+            "Invalid registration role",
+            False
+        ), 400
 
     try:
         user_id = create_user(
@@ -194,18 +192,29 @@ def register():
             address=address
         )
 
-        return jsonify({
-            "success": True,
-            "message": "Account created successfully",
-            "user_id": user_id
-        }), 201
+        return response(
+            "Registration successful",
+            True,
+            user_id=user_id
+        ), 201
 
     except sqlite3.IntegrityError:
-        return jsonify({
-            "success": False,
-            "message": "Username already exists"
-        }), 409
+        return response(
+            "Username already exists",
+            False
+        ), 409
 
+    except Exception:
+        app.logger.exception("Registration error")
+        return response(
+            "Registration failed",
+            False
+        ), 500
+
+
+# --------------------------------------------------
+# LOGIN
+# --------------------------------------------------
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -216,449 +225,125 @@ def login():
     password = str(data.get("password", ""))
 
     if not username or not password:
-        return jsonify({
-            "success": False,
-            "message": "Username and password are required"
-        }), 400
+        return response(
+            "Username and password are required",
+            False
+        ), 400
 
-    user = get_user_by_username(username)
+    db = get_db()
 
-    if not user or not check_password_hash(
-        user["password_hash"],
-        password
-    ):
-        return jsonify({
-            "success": False,
-            "message": "Invalid username or password"
-        }), 401
+    user = db.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username = ?
+        """,
+        (username,)
+    ).fetchone()
+
+    db.close()
+
+    if not user:
+        return response(
+            "Invalid username or password",
+            False
+        ), 401
+
+    if not user["is_active"]:
+        return response(
+            "Your account is inactive",
+            False
+        ), 403
+
+    try:
+        password_valid = check_password_hash(
+            user["password_hash"],
+            password
+        )
+    except (ValueError, TypeError):
+        password_valid = False
+
+    if not password_valid:
+        return response(
+            "Invalid username or password",
+            False
+        ), 401
 
     session.clear()
 
     session["user_id"] = user["id"]
+    session["role"] = user["role"]
 
-    return jsonify({
-        "success": True,
-        "message": "Login successful",
-        "user": {
-            "id": user["id"],
-            "username": user["username"],
-            "full_name": user["full_name"],
-            "role": user["role"]
-        }
-    })
+    return response(
+        "Login successful",
+        True,
+        user=user_json(user),
+        redirect={
+            "customer": "/customer",
+            "farmer": "/farmer",
+            "admin": "/admin"
+        }.get(user["role"], "/")
+    )
 
+
+# --------------------------------------------------
+# CURRENT USER
+# --------------------------------------------------
+
+@app.route("/api/me")
+@login_required()
+def me():
+
+    user = get_current_user()
+
+    return response(
+        "User loaded",
+        True,
+        user=user_json(user)
+    )
+
+
+# --------------------------------------------------
+# LOGOUT
+# --------------------------------------------------
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
 
     session.clear()
 
-    return jsonify({
-        "success": True,
-        "message": "Logged out successfully"
-    })
-
-
-@app.route("/api/me")
-@login_required()
-def me():
-
-    user = current_user()
-
-    return jsonify({
-        "success": True,
-        "user": dict(user)
-    })
+    return response(
+        "Logged out successfully",
+        True
+    )
 
 
 # --------------------------------------------------
-# PRODUCTS
+# PUBLIC PRODUCTS
 # --------------------------------------------------
 
-@app.route("/api/products")
+@app.route("/api/products", methods=["GET"])
 def products():
 
-    search = request.args.get("q", "").strip()
-    category = request.args.get("category", "").strip()
+    db = get_db()
 
-    sql = """
-        SELECT
-            p.id,
-            p.name,
-            p.category,
-            p.price_paise,
-            p.stock_quantity,
-            p.unit,
-            p.description,
-            p.image_url,
-            p.farmer_id,
-            u.full_name AS farmer_name
-        FROM products p
-        LEFT JOIN users u
-            ON p.farmer_id = u.id
-        WHERE p.is_available = 1
-          AND p.stock_quantity > 0
-    """
-
-    params = []
-
-    if search:
-        sql += " AND p.name LIKE ?"
-        params.append("%" + search + "%")
-
-    if category:
-        sql += " AND p.category = ?"
-        params.append(category)
-
-    sql += " ORDER BY p.name"
-
-    result = query_db(sql, params)
-
-    return jsonify({
-        "success": True,
-        "products": [dict(row) for row in result]
-    })
-
-
-@app.route("/api/products/<int:product_id>")
-def product_detail(product_id):
-
-    product = query_db(
-        """
-        SELECT
-            p.*,
-            u.full_name AS farmer_name
-        FROM products p
-        LEFT JOIN users u
-            ON p.farmer_id = u.id
-        WHERE p.id = ?
-        """,
-        (product_id,),
-        one=True
-    )
-
-    if not product:
-        return jsonify({
-            "success": False,
-            "message": "Product not found"
-        }), 404
-
-    return jsonify({
-        "success": True,
-        "product": dict(product)
-    })
-
-
-# --------------------------------------------------
-# FARMER PRODUCTS
-# --------------------------------------------------
-
-@app.route("/api/farmer/products", methods=["GET"])
-@login_required("farmer")
-def farmer_products():
-
-    user = current_user()
-
-    result = query_db(
+    rows = db.execute(
         """
         SELECT *
         FROM products
-        WHERE farmer_id = ?
+        WHERE is_available = 1
+          AND stock_quantity > 0
         ORDER BY created_at DESC
-        """,
-        (user["id"],)
-    )
-
-    return jsonify({
-        "success": True,
-        "products": [dict(row) for row in result]
-    })
-
-
-@app.route("/api/farmer/products", methods=["POST"])
-@login_required("farmer")
-def farmer_add_product():
-
-    user = current_user()
-
-    data = request.get_json(silent=True) or {}
-
-    name = str(data.get("name", "")).strip()
-    category = str(data.get("category", "")).strip()
-
-    unit = str(data.get("unit", "kg")).strip()
-
-    description = str(data.get("description", "")).strip()
-    image_url = str(data.get("image_url", "")).strip()
-
-    try:
-        price_paise = money_to_paise(data.get("price_rupees"))
-
-        stock_quantity = float(data.get("stock_quantity", 0))
-
-        if stock_quantity < 0:
-            raise ValueError
-
-    except (TypeError, ValueError):
-        return jsonify({
-            "success": False,
-            "message": "Invalid price or stock quantity"
-        }), 400
-
-    if not name or not category:
-        return jsonify({
-            "success": False,
-            "message": "Product name and category are required"
-        }), 400
-
-    product_id = execute_db(
         """
-        INSERT INTO products (
-            farmer_id,
-            name,
-            category,
-            price_paise,
-            stock_quantity,
-            unit,
-            description,
-            image_url,
-            is_available
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            user["id"],
-            name,
-            category,
-            price_paise,
-            stock_quantity,
-            unit,
-            description,
-            image_url,
-            1
-        )
+    ).fetchall()
+
+    db.close()
+
+    return response(
+        "Products loaded",
+        True,
+        products=[product_json(p) for p in rows]
     )
-
-    return jsonify({
-        "success": True,
-        "message": "Product added successfully",
-        "product_id": product_id
-    }), 201
-
-
-@app.route("/api/farmer/products/<int:product_id>", methods=["PUT"])
-@login_required("farmer")
-def farmer_update_product(product_id):
-
-    user = current_user()
-
-    product = query_db(
-        """
-        SELECT *
-        FROM products
-        WHERE id = ?
-          AND farmer_id = ?
-        """,
-        (product_id, user["id"]),
-        one=True
-    )
-
-    if not product:
-        return jsonify({
-            "success": False,
-            "message": "Product not found"
-        }), 404
-
-    data = request.get_json(silent=True) or {}
-
-    name = str(data.get("name", product["name"])).strip()
-
-    category = str(
-        data.get("category", product["category"])
-    ).strip()
-
-    try:
-        price_paise = money_to_paise(
-            data.get(
-                "price_rupees",
-                product["price_paise"] / 100
-            )
-        )
-
-        stock_quantity = float(
-            data.get(
-                "stock_quantity",
-                product["stock_quantity"]
-            )
-        )
-
-        if stock_quantity < 0:
-            raise ValueError
-
-    except (TypeError, ValueError):
-        return jsonify({
-            "success": False,
-            "message": "Invalid price or stock"
-        }), 400
-
-    execute_db(
-        """
-        UPDATE products
-        SET name = ?,
-            category = ?,
-            price_paise = ?,
-            stock_quantity = ?,
-            description = ?,
-            image_url = ?,
-            is_available = ?
-        WHERE id = ?
-          AND farmer_id = ?
-        """,
-        (
-            name,
-            category,
-            price_paise,
-            stock_quantity,
-            data.get("description", product["description"]),
-            data.get("image_url", product["image_url"]),
-            1 if stock_quantity > 0 else 0,
-            product_id,
-            user["id"]
-        )
-    )
-
-    return jsonify({
-        "success": True,
-        "message": "Product updated successfully"
-    })
-
-
-@app.route("/api/farmer/products/<int:product_id>", methods=["DELETE"])
-@login_required("farmer")
-def farmer_delete_product(product_id):
-
-    user = current_user()
-
-    execute_db(
-        """
-        DELETE FROM products
-        WHERE id = ?
-          AND farmer_id = ?
-        """,
-        (product_id, user["id"])
-    )
-
-    return jsonify({
-        "success": True,
-        "message": "Product deleted"
-    })
-
-
-# --------------------------------------------------
-# DELIVERY SCHEDULE
-# --------------------------------------------------
-
-def next_delivery_day():
-
-    today = date.today()
-
-    delivery_days = {
-        2: "Wednesday",
-        6: "Sunday"
-    }
-
-    for offset in range(1, 8):
-
-        delivery_date = today + timedelta(days=offset)
-
-        if delivery_date.weekday() in delivery_days:
-
-            return {
-                "date": delivery_date.isoformat(),
-                "day": delivery_days[delivery_date.weekday()]
-            }
-
-    return None
-
-
-@app.route("/api/delivery/next")
-def next_delivery():
-
-    delivery = next_delivery_day()
-
-    return jsonify({
-        "success": True,
-        "delivery": delivery
-    })
-
-
-@app.route("/api/admin/delivery-schedule", methods=["GET"])
-@login_required("admin")
-def admin_delivery_schedule():
-
-    result = query_db(
-        """
-        SELECT *
-        FROM delivery_schedule
-        ORDER BY delivery_date
-        """
-    )
-
-    return jsonify({
-        "success": True,
-        "schedule": [dict(row) for row in result]
-    })
-
-
-@app.route("/api/admin/delivery-schedule", methods=["POST"])
-@login_required("admin")
-def admin_create_delivery():
-
-    data = request.get_json(silent=True) or {}
-
-    delivery_date = str(data.get("delivery_date", "")).strip()
-
-    try:
-        parsed_date = date.fromisoformat(delivery_date)
-
-    except ValueError:
-        return jsonify({
-            "success": False,
-            "message": "Invalid delivery date"
-        }), 400
-
-    if parsed_date.weekday() not in (2, 6):
-        return jsonify({
-            "success": False,
-            "message": "Delivery must be Wednesday or Sunday"
-        }), 400
-
-    day = "Wednesday" if parsed_date.weekday() == 2 else "Sunday"
-
-    execute_db(
-        """
-        INSERT INTO delivery_schedule (
-            delivery_day,
-            delivery_date,
-            start_time,
-            end_time,
-            is_active
-        )
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (
-            day,
-            delivery_date,
-            data.get("start_time", "08:00"),
-            data.get("end_time", "18:00"),
-            1
-        )
-    )
-
-    return jsonify({
-        "success": True,
-        "message": "Delivery schedule created"
-    }), 201
 
 
 # --------------------------------------------------
@@ -669,9 +354,11 @@ def admin_create_delivery():
 @login_required("customer")
 def customer_orders():
 
-    user = current_user()
+    user = get_current_user()
 
-    result = query_db(
+    db = get_db()
+
+    orders = db.execute(
         """
         SELECT *
         FROM orders
@@ -679,106 +366,182 @@ def customer_orders():
         ORDER BY created_at DESC
         """,
         (user["id"],)
+    ).fetchall()
+
+    result = []
+
+    for order in orders:
+
+        items = db.execute(
+            """
+            SELECT *
+            FROM order_items
+            WHERE order_id = ?
+            """,
+            (order["id"],)
+        ).fetchall()
+
+        result.append({
+            "id": order["id"],
+            "order_number": order["order_number"],
+            "delivery_date": order["delivery_date"],
+            "delivery_slot": order["delivery_slot"],
+            "delivery_address": order["delivery_address"],
+            "total": order["total_paise"] / 100,
+            "total_paise": order["total_paise"],
+            "status": order["status"],
+            "payment_method": order["payment_method"],
+            "payment_status": order["payment_status"],
+            "items": [
+                {
+                    "product_name": item["product_name"],
+                    "quantity": item["quantity"],
+                    "unit": item["unit"],
+                    "price": item["price_paise"] / 100,
+                    "subtotal": item["subtotal_paise"] / 100
+                }
+                for item in items
+            ]
+        })
+
+    db.close()
+
+    return response(
+        "Orders loaded",
+        True,
+        orders=result
     )
 
-    return jsonify({
-        "success": True,
-        "orders": [dict(row) for row in result]
-    })
 
+# --------------------------------------------------
+# PLACE CUSTOMER ORDER
+# --------------------------------------------------
 
 @app.route("/api/customer/orders", methods=["POST"])
 @login_required("customer")
-def customer_create_order():
+def place_order():
 
-    user = current_user()
+    user = get_current_user()
 
     data = request.get_json(silent=True) or {}
 
     items = data.get("items", [])
-
+    delivery_date = str(data.get("delivery_date", "")).strip()
     delivery_address = str(
         data.get("delivery_address", user["address"] or "")
     ).strip()
 
-    delivery_date = str(
-        data.get("delivery_date", "")
-    ).strip()
+    payment_method = str(
+        data.get("payment_method", "COD")
+    ).strip().upper()
 
-    if not items:
-        return jsonify({
-            "success": False,
-            "message": "Your cart is empty"
-        }), 400
+    if not isinstance(items, list) or not items:
+        return response(
+            "Cart is empty",
+            False
+        ), 400
 
     if not delivery_address:
-        return jsonify({
-            "success": False,
-            "message": "Delivery address is required"
-        }), 400
+        return response(
+            "Delivery address is required",
+            False
+        ), 400
+
+    if payment_method not in ("COD", "UPI"):
+        return response(
+            "Invalid payment method",
+            False
+        ), 400
 
     try:
-        parsed_date = date.fromisoformat(delivery_date)
-
+        requested_date = date.fromisoformat(delivery_date)
     except ValueError:
-        return jsonify({
-            "success": False,
-            "message": "Invalid delivery date"
-        }), 400
+        return response(
+            "Invalid delivery date",
+            False
+        ), 400
 
-    if parsed_date.weekday() not in (2, 6):
-        return jsonify({
-            "success": False,
-            "message": "Choose Wednesday or Sunday"
-        }), 400
+    if requested_date <= date.today():
+        return response(
+            "Choose a future delivery date",
+            False
+        ), 400
 
-    order_number = "FK-" + uuid.uuid4().hex[:10].upper()
+    delivery_day = requested_date.strftime("%A")
 
-    connection = get_db()
+    if delivery_day not in ("Wednesday", "Sunday"):
+        return response(
+            "Delivery is available only on Wednesday and Sunday",
+            False
+        ), 400
+
+    db = get_db()
 
     try:
-        total_paise = 0
 
-        validated_items = []
+        total_paise = 0
+        order_items = []
 
         for item in items:
 
-            product_id = int(item.get("product_id"))
+            product_id = item.get("product_id")
 
-            quantity = float(item.get("quantity"))
+            try:
+                quantity = float(item.get("quantity", 0))
+            except (ValueError, TypeError):
+                return response(
+                    "Invalid quantity",
+                    False
+                ), 400
 
             if quantity <= 0:
-                raise ValueError("Invalid quantity")
+                return response(
+                    "Quantity must be greater than zero",
+                    False
+                ), 400
 
-            product = connection.execute(
+            product = db.execute(
                 """
                 SELECT *
                 FROM products
                 WHERE id = ?
                   AND is_available = 1
-                  AND stock_quantity >= ?
+                  AND stock_quantity > 0
                 """,
-                (product_id, quantity)
+                (product_id,)
             ).fetchone()
 
             if not product:
-                raise ValueError(
-                    "Product unavailable or insufficient stock"
-                )
+                return response(
+                    "Product unavailable",
+                    False
+                ), 400
 
-            subtotal = round(
-                product["price_paise"] * quantity
+            if quantity > product["stock_quantity"]:
+                return response(
+                    "Insufficient stock for " + product["name"],
+                    False
+                ), 400
+
+            subtotal = int(
+                round(product["price_paise"] * quantity)
             )
 
             total_paise += subtotal
 
-            validated_items.append(
-                (product, quantity, subtotal)
-            )
+            order_items.append({
+                "product": product,
+                "quantity": quantity,
+                "subtotal": subtotal
+            })
 
-        delivery_charge_paise = 0
+        order_number = (
+            "FK"
+            + datetime.now().strftime("%Y%m%d%H%M%S")
+            + str(user["id"])
+        )
 
-        cursor = connection.execute(
+        cursor = db.execute(
             """
             INSERT INTO orders (
                 customer_id,
@@ -788,27 +551,33 @@ def customer_create_order():
                 delivery_address,
                 total_paise,
                 delivery_charge_paise,
-                status
+                status,
+                payment_method,
+                payment_status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user["id"],
                 order_number,
                 delivery_date,
-                "Wednesday" if parsed_date.weekday() == 2 else "Sunday",
+                delivery_day,
                 delivery_address,
                 total_paise,
-                delivery_charge_paise,
-                "Placed"
+                0,
+                "Placed",
+                payment_method,
+                "Pending"
             )
         )
 
         order_id = cursor.lastrowid
 
-        for product, quantity, subtotal in validated_items:
+        for item in order_items:
 
-            connection.execute(
+            product = item["product"]
+
+            db.execute(
                 """
                 INSERT INTO order_items (
                     order_id,
@@ -827,258 +596,702 @@ def customer_create_order():
                     product["id"],
                     product["farmer_id"],
                     product["name"],
-                    quantity,
+                    item["quantity"],
                     product["unit"],
                     product["price_paise"],
-                    subtotal
+                    item["subtotal"]
                 )
             )
 
-            connection.execute(
+            db.execute(
                 """
                 UPDATE products
-                SET stock_quantity = stock_quantity - ?,
-                    is_available = CASE
-                        WHEN stock_quantity - ? <= 0 THEN 0
-                        ELSE 1
-                    END
+                SET stock_quantity = stock_quantity - ?
                 WHERE id = ?
                 """,
                 (
-                    quantity,
-                    quantity,
+                    item["quantity"],
                     product["id"]
                 )
             )
 
-        connection.commit()
+        db.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "Order placed successfully",
-            "order_id": order_id,
-            "order_number": order_number,
-            "total_paise": total_paise
-        }), 201
+        return response(
+            "Order placed successfully",
+            True,
+            order_id=order_id,
+            order_number=order_number,
+            total=total_paise / 100
+        ), 201
 
-    except (ValueError, TypeError, sqlite3.Error) as error:
+    except Exception:
 
-        connection.rollback()
+        db.rollback()
 
-        return jsonify({
-            "success": False,
-            "message": str(error)
-        }), 400
+        app.logger.exception("Order error")
+
+        return response(
+            "Unable to place order",
+            False
+        ), 500
 
     finally:
-        connection.close()
+        db.close()
+
+
+# --------------------------------------------------
+# FARMER PRODUCTS
+# --------------------------------------------------
+
+@app.route("/api/farmer/products", methods=["GET"])
+@login_required("farmer")
+def farmer_products():
+
+    user = get_current_user()
+
+    db = get_db()
+
+    rows = db.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE farmer_id = ?
+        ORDER BY created_at DESC
+        """,
+        (user["id"],)
+    ).fetchall()
+
+    db.close()
+
+    return response(
+        "Farmer products loaded",
+        True,
+        products=[product_json(p) for p in rows]
+    )
+
+
+# --------------------------------------------------
+# ADD FARMER PRODUCT
+# --------------------------------------------------
+
+@app.route("/api/farmer/products", methods=["POST"])
+@login_required("farmer")
+def add_farmer_product():
+
+    user = get_current_user()
+
+    data = request.get_json(silent=True) or {}
+
+    name = str(data.get("name", "")).strip()
+    category = str(data.get("category", "Vegetables")).strip()
+
+    description = str(data.get("description", "")).strip()
+    unit = str(data.get("unit", "kg")).strip()
+
+    image_url = str(data.get("image_url", "")).strip()
+
+    try:
+        price = float(data.get("price", 0))
+        stock = float(data.get("stock_quantity", 0))
+    except (ValueError, TypeError):
+        return response(
+            "Invalid price or stock",
+            False
+        ), 400
+
+    if not name or price < 0 or stock < 0:
+        return response(
+            "Enter valid product details",
+            False
+        ), 400
+
+    db = get_db()
+
+    cursor = db.execute(
+        """
+        INSERT INTO products (
+            farmer_id,
+            name,
+            category,
+            price_paise,
+            stock_quantity,
+            unit,
+            description,
+            image_url,
+            is_available
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            user["id"],
+            name,
+            category,
+            int(round(price * 100)),
+            stock,
+            unit,
+            description,
+            image_url,
+            1
+        )
+    )
+
+    db.commit()
+
+    product_id = cursor.lastrowid
+
+    db.close()
+
+    return response(
+        "Product added successfully",
+        True,
+        product_id=product_id
+    ), 201
+
+
+# --------------------------------------------------
+# UPDATE FARMER PRODUCT
+# --------------------------------------------------
+
+@app.route("/api/farmer/products/<int:product_id>", methods=["PUT"])
+@login_required("farmer")
+def update_farmer_product(product_id):
+
+    user = get_current_user()
+
+    data = request.get_json(silent=True) or {}
+
+    db = get_db()
+
+    product = db.execute(
+        """
+        SELECT *
+        FROM products
+        WHERE id = ?
+          AND farmer_id = ?
+        """,
+        (product_id, user["id"])
+    ).fetchone()
+
+    if not product:
+        db.close()
+
+        return response(
+            "Product not found",
+            False
+        ), 404
+
+    name = str(data.get("name", product["name"])).strip()
+
+    category = str(
+        data.get("category", product["category"])
+    ).strip()
+
+    description = str(
+        data.get("description", product["description"] or "")
+    ).strip()
+
+    unit = str(data.get("unit", product["unit"])).strip()
+
+    image_url = str(
+        data.get("image_url", product["image_url"] or "")
+    ).strip()
+
+    try:
+        price = float(
+            data.get(
+                "price",
+                product["price_paise"] / 100
+            )
+        )
+
+        stock = float(
+            data.get(
+                "stock_quantity",
+                product["stock_quantity"]
+            )
+        )
+
+    except (ValueError, TypeError):
+
+        db.close()
+
+        return response(
+            "Invalid price or stock",
+            False
+        ), 400
+
+    if price < 0 or stock < 0 or not name:
+
+        db.close()
+
+        return response(
+            "Invalid product details",
+            False
+        ), 400
+
+    db.execute(
+        """
+        UPDATE products
+        SET name = ?,
+            category = ?,
+            price_paise = ?,
+            stock_quantity = ?,
+            unit = ?,
+            description = ?,
+            image_url = ?
+        WHERE id = ?
+          AND farmer_id = ?
+        """,
+        (
+            name,
+            category,
+            int(round(price * 100)),
+            stock,
+            unit,
+            description,
+            image_url,
+            product_id,
+            user["id"]
+        )
+    )
+
+    db.commit()
+    db.close()
+
+    return response(
+        "Product updated successfully",
+        True
+    )
+
+
+# --------------------------------------------------
+# DELETE FARMER PRODUCT
+# --------------------------------------------------
+
+@app.route("/api/farmer/products/<int:product_id>", methods=["DELETE"])
+@login_required("farmer")
+def delete_farmer_product(product_id):
+
+    user = get_current_user()
+
+    db = get_db()
+
+    cursor = db.execute(
+        """
+        DELETE FROM products
+        WHERE id = ?
+          AND farmer_id = ?
+        """,
+        (product_id, user["id"])
+    )
+
+    db.commit()
+
+    deleted = cursor.rowcount
+
+    db.close()
+
+    if not deleted:
+        return response(
+            "Product not found",
+            False
+        ), 404
+
+    return response(
+        "Product deleted successfully",
+        True
+    )
 
 
 # --------------------------------------------------
 # FARMER ORDERS
 # --------------------------------------------------
 
-@app.route("/api/farmer/orders")
+@app.route("/api/farmer/orders", methods=["GET"])
 @login_required("farmer")
 def farmer_orders():
 
-    user = current_user()
+    user = get_current_user()
 
-    result = query_db(
+    db = get_db()
+
+    rows = db.execute(
         """
-        SELECT
+        SELECT DISTINCT
             o.id,
             o.order_number,
             o.delivery_date,
             o.delivery_slot,
+            o.delivery_address,
             o.status,
-            o.created_at,
-            oi.product_name,
-            oi.quantity,
-            oi.unit,
-            oi.subtotal_paise,
-            u.full_name AS customer_name
-        FROM order_items oi
-        JOIN orders o
-            ON oi.order_id = o.id
-        JOIN users u
-            ON o.customer_id = u.id
+            o.payment_method,
+            o.payment_status,
+            u.full_name AS customer_name,
+            u.phone AS customer_phone
+        FROM orders o
+        JOIN order_items oi ON oi.order_id = o.id
+        JOIN users u ON u.id = o.customer_id
         WHERE oi.farmer_id = ?
         ORDER BY o.created_at DESC
         """,
         (user["id"],)
-    )
+    ).fetchall()
 
-    return jsonify({
-        "success": True,
-        "orders": [dict(row) for row in result]
-    })
+    result = []
+
+    for order in rows:
+
+        items = db.execute(
+            """
+            SELECT *
+            FROM order_items
+            WHERE order_id = ?
+              AND farmer_id = ?
+            """,
+            (order["id"], user["id"])
+        ).fetchall()
+
+        result.append({
+            "id": order["id"],
+            "order_number": order["order_number"],
+            "customer_name": order["customer_name"],
+            "customer_phone": order["customer_phone"],
+            "delivery_date": order["delivery_date"],
+            "delivery_slot": order["delivery_slot"],
+            "delivery_address": order["delivery_address"],
+            "status": order["status"],
+            "payment_method": order["payment_method"],
+            "payment_status": order["payment_status"],
+            "items": [
+                {
+                    "product_name": item["product_name"],
+                    "quantity": item["quantity"],
+                    "unit": item["unit"],
+                    "subtotal": item["subtotal_paise"] / 100
+                }
+                for item in items
+            ]
+        })
+
+    db.close()
+
+    return response(
+        "Farmer orders loaded",
+        True,
+        orders=result
+    )
 
 
 # --------------------------------------------------
 # ADMIN DASHBOARD
 # --------------------------------------------------
 
-@app.route("/api/admin/dashboard")
+@app.route("/api/admin/dashboard", methods=["GET"])
 @login_required("admin")
 def admin_dashboard():
 
-    stats = query_db(
+    db = get_db()
+
+    customers = db.execute(
+        "SELECT COUNT(*) FROM users WHERE role='customer'"
+    ).fetchone()[0]
+
+    farmers = db.execute(
+        "SELECT COUNT(*) FROM users WHERE role='farmer'"
+    ).fetchone()[0]
+
+    products = db.execute(
+        "SELECT COUNT(*) FROM products"
+    ).fetchone()[0]
+
+    orders = db.execute(
+        "SELECT COUNT(*) FROM orders"
+    ).fetchone()[0]
+
+    revenue = db.execute(
         """
-        SELECT
-            (SELECT COUNT(*)
-             FROM users
-             WHERE role = 'customer') AS customers,
+        SELECT COALESCE(SUM(total_paise), 0)
+        FROM orders
+        WHERE status != 'Cancelled'
+        """
+    ).fetchone()[0]
 
-            (SELECT COUNT(*)
-             FROM users
-             WHERE role = 'farmer') AS farmers,
+    db.close()
 
-            (SELECT COUNT(*)
-             FROM products) AS products,
-
-            (SELECT COUNT(*)
-             FROM products
-             WHERE is_available = 1
-               AND stock_quantity > 0) AS available_products,
-
-            (SELECT COUNT(*)
-             FROM orders) AS orders,
-
-            (SELECT COALESCE(SUM(total_paise), 0)
-             FROM orders) AS revenue
-        """,
-        one=True
+    return response(
+        "Dashboard loaded",
+        True,
+        dashboard={
+            "customers": customers,
+            "farmers": farmers,
+            "products": products,
+            "orders": orders,
+            "revenue": revenue / 100
+        }
     )
 
-    return jsonify({
-        "success": True,
-        "dashboard": dict(stats)
-    })
-
 
 # --------------------------------------------------
-# ADMIN CUSTOMERS
+# ADMIN USERS
 # --------------------------------------------------
 
-@app.route("/api/admin/customers")
+@app.route("/api/admin/customers", methods=["GET"])
 @login_required("admin")
 def admin_customers():
 
-    result = query_db(
+    db = get_db()
+
+    rows = db.execute(
         """
-        SELECT id, username, full_name, phone, email, address, is_active
+        SELECT id, username, full_name, phone, email,
+               role, address, is_active, created_at
         FROM users
         WHERE role = 'customer'
         ORDER BY created_at DESC
         """
+    ).fetchall()
+
+    db.close()
+
+    return response(
+        "Customers loaded",
+        True,
+        customers=[dict(row) for row in rows]
     )
 
-    return jsonify({
-        "success": True,
-        "customers": [dict(row) for row in result]
-    })
 
-
-# --------------------------------------------------
-# ADMIN FARMERS
-# --------------------------------------------------
-
-@app.route("/api/admin/farmers")
+@app.route("/api/admin/farmers", methods=["GET"])
 @login_required("admin")
 def admin_farmers():
 
-    result = query_db(
+    db = get_db()
+
+    rows = db.execute(
         """
-        SELECT id, username, full_name, phone, email, address, is_active
+        SELECT id, username, full_name, phone, email,
+               role, address, is_active, created_at
         FROM users
         WHERE role = 'farmer'
         ORDER BY created_at DESC
         """
+    ).fetchall()
+
+    db.close()
+
+    return response(
+        "Farmers loaded",
+        True,
+        farmers=[dict(row) for row in rows]
     )
 
-    return jsonify({
-        "success": True,
-        "farmers": [dict(row) for row in result]
-    })
+
+# --------------------------------------------------
+# ADMIN CREATE USER
+# --------------------------------------------------
+
+@app.route("/api/admin/users", methods=["POST"])
+@login_required("admin")
+def admin_create_user():
+
+    data = request.get_json(silent=True) or {}
+
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
+    full_name = str(data.get("full_name", "")).strip()
+
+    role = str(data.get("role", "customer")).strip().lower()
+
+    phone = str(data.get("phone", "")).strip()
+    email = str(data.get("email", "")).strip()
+    address = str(data.get("address", "")).strip()
+
+    if not username or not password or not full_name:
+        return response(
+            "Username, password and full name required",
+            False
+        ), 400
+
+    if len(password) < 8:
+        return response(
+            "Password must contain at least 8 characters",
+            False
+        ), 400
+
+    if role not in ("customer", "farmer"):
+        return response(
+            "Only customer and farmer accounts can be created",
+            False
+        ), 400
+
+    try:
+
+        user_id = create_user(
+            username=username,
+            password=password,
+            full_name=full_name,
+            role=role,
+            phone=phone,
+            email=email,
+            address=address
+        )
+
+        return response(
+            "User created successfully",
+            True,
+            user_id=user_id
+        ), 201
+
+    except sqlite3.IntegrityError:
+
+        return response(
+            "Username already exists",
+            False
+        ), 409
 
 
 # --------------------------------------------------
-# ADMIN ALL PRODUCTS
+# ADMIN ACTIVATE / DEACTIVATE USER
 # --------------------------------------------------
 
-@app.route("/api/admin/products")
+@app.route("/api/admin/users/<int:user_id>/status", methods=["PUT"])
+@login_required("admin")
+def admin_user_status(user_id):
+
+    data = request.get_json(silent=True) or {}
+
+    active = data.get("is_active")
+
+    if active not in (True, False, 0, 1):
+        return response(
+            "is_active must be true or false",
+            False
+        ), 400
+
+    db = get_db()
+
+    cursor = db.execute(
+        """
+        UPDATE users
+        SET is_active = ?
+        WHERE id = ?
+          AND role IN ('customer', 'farmer')
+        """,
+        (int(active), user_id)
+    )
+
+    db.commit()
+    db.close()
+
+    if cursor.rowcount == 0:
+        return response(
+            "User not found",
+            False
+        ), 404
+
+    return response(
+        "User status updated",
+        True
+    )
+
+
+# --------------------------------------------------
+# ADMIN PRODUCTS
+# --------------------------------------------------
+
+@app.route("/api/admin/products", methods=["GET"])
 @login_required("admin")
 def admin_products():
 
-    result = query_db(
+    db = get_db()
+
+    rows = db.execute(
         """
-        SELECT
-            p.*,
-            u.full_name AS farmer_name
+        SELECT p.*, u.full_name AS farmer_name
         FROM products p
-        LEFT JOIN users u
-            ON p.farmer_id = u.id
+        LEFT JOIN users u ON u.id = p.farmer_id
         ORDER BY p.created_at DESC
         """
+    ).fetchall()
+
+    db.close()
+
+    result = []
+
+    for row in rows:
+
+        item = product_json(row)
+
+        item["farmer_name"] = row["farmer_name"]
+
+        result.append(item)
+
+    return response(
+        "Products loaded",
+        True,
+        products=result
     )
 
-    return jsonify({
-        "success": True,
-        "products": [dict(row) for row in result]
-    })
-
 
 # --------------------------------------------------
-# ADMIN ALL ORDERS
+# ADMIN ORDERS
 # --------------------------------------------------
 
-@app.route("/api/admin/orders")
+@app.route("/api/admin/orders", methods=["GET"])
 @login_required("admin")
 def admin_orders():
 
-    result = query_db(
+    db = get_db()
+
+    rows = db.execute(
         """
-        SELECT
-            o.*,
-            u.full_name AS customer_name,
-            u.phone AS customer_phone
+        SELECT o.*, u.full_name AS customer_name,
+               u.phone AS customer_phone
         FROM orders o
-        JOIN users u
-            ON o.customer_id = u.id
+        JOIN users u ON u.id = o.customer_id
         ORDER BY o.created_at DESC
         """
+    ).fetchall()
+
+    db.close()
+
+    return response(
+        "Orders loaded",
+        True,
+        orders=[dict(row) for row in rows]
     )
 
-    return jsonify({
-        "success": True,
-        "orders": [dict(row) for row in result]
-    })
 
+# --------------------------------------------------
+# ADMIN UPDATE ORDER STATUS
+# --------------------------------------------------
 
-@app.route("/api/admin/orders/<int:order_id>", methods=["PUT"])
+@app.route("/api/admin/orders/<int:order_id>/status", methods=["PUT"])
 @login_required("admin")
-def admin_update_order(order_id):
+def admin_order_status(order_id):
 
     data = request.get_json(silent=True) or {}
 
     status = str(data.get("status", "")).strip()
 
-    allowed_statuses = (
+    allowed = (
         "Placed",
+        "Confirmed",
         "Preparing",
         "Out for Delivery",
         "Delivered",
         "Cancelled"
     )
 
-    if status not in allowed_statuses:
-        return jsonify({
-            "success": False,
-            "message": "Invalid order status"
-        }), 400
+    if status not in allowed:
+        return response(
+            "Invalid order status",
+            False
+        ), 400
 
-    execute_db(
+    db = get_db()
+
+    cursor = db.execute(
         """
         UPDATE orders
         SET status = ?
@@ -1087,38 +1300,88 @@ def admin_update_order(order_id):
         (status, order_id)
     )
 
-    return jsonify({
-        "success": True,
-        "message": "Order status updated"
-    })
+    db.commit()
+    db.close()
+
+    if cursor.rowcount == 0:
+        return response(
+            "Order not found",
+            False
+        ), 404
+
+    return response(
+        "Order status updated",
+        True
+    )
 
 
 # --------------------------------------------------
-# ADMIN USER ACTIVATION
+# FARMER UPDATE ORDER STATUS
 # --------------------------------------------------
 
-@app.route("/api/admin/users/<int:user_id>", methods=["PUT"])
-@login_required("admin")
-def admin_update_user(user_id):
+@app.route(
+    "/api/farmer/orders/<int:order_id>/status",
+    methods=["PUT"]
+)
+@login_required("farmer")
+def farmer_order_status(order_id):
+
+    user = get_current_user()
 
     data = request.get_json(silent=True) or {}
 
-    is_active = 1 if data.get("is_active") else 0
+    status = str(data.get("status", "")).strip()
 
-    execute_db(
-        """
-        UPDATE users
-        SET is_active = ?
-        WHERE id = ?
-          AND role IN ('customer', 'farmer')
-        """,
-        (is_active, user_id)
+    allowed = (
+        "Confirmed",
+        "Preparing",
+        "Out for Delivery",
+        "Delivered"
     )
 
-    return jsonify({
-        "success": True,
-        "message": "User status updated"
-    })
+    if status not in allowed:
+        return response(
+            "Invalid order status",
+            False
+        ), 400
+
+    db = get_db()
+
+    order = db.execute(
+        """
+        SELECT o.id
+        FROM orders o
+        JOIN order_items oi ON oi.order_id = o.id
+        WHERE o.id = ?
+          AND oi.farmer_id = ?
+        """,
+        (order_id, user["id"])
+    ).fetchone()
+
+    if not order:
+        db.close()
+
+        return response(
+            "Order not found",
+            False
+        ), 404
+
+    db.execute(
+        """
+        UPDATE orders
+        SET status = ?
+        WHERE id = ?
+        """,
+        (status, order_id)
+    )
+
+    db.commit()
+    db.close()
+
+    return response(
+        "Order status updated",
+        True
+    )
 
 
 # --------------------------------------------------
@@ -1128,37 +1391,42 @@ def admin_update_user(user_id):
 @app.errorhandler(404)
 def not_found(error):
 
-    return jsonify({
-        "success": False,
-        "message": "Resource not found"
-    }), 404
+    return response(
+        "Resource not found",
+        False
+    ), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+
+    return response(
+        "Method not allowed",
+        False
+    ), 405
 
 
 @app.errorhandler(500)
 def internal_error(error):
 
-    app.logger.exception("FreshKart server error")
+    app.logger.exception("Internal server error")
 
-    return jsonify({
-        "success": False,
-        "message": "Internal server error"
-    }), 500
+    return response(
+        "Internal server error",
+        False
+    ), 500
 
 
 # --------------------------------------------------
-# START APPLICATION
+# START
 # --------------------------------------------------
-
-with app.app_context():
-    init_db()
-
 
 if __name__ == "__main__":
 
-    port = int(os.environ.get("PORT", 5000))
+    init_db()
 
     app.run(
         host="0.0.0.0",
-        port=port,
+        port=int(os.environ.get("PORT", 5000)),
         debug=False
     )
