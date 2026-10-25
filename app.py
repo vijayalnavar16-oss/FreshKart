@@ -3,37 +3,52 @@ import os
 import sqlite3
 from functools import wraps
 from datetime import datetime, date
-from flask import Flask, request, jsonify, session
-from werkzeug.security import check_password_hash, generate_password_hash
-
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    session,
+    render_template,
+    redirect
+)
+from werkzeug.security import check_password_hash
 from database import get_db, init_db, create_user
+
+
+# ==================================================
+# APPLICATION
+# ==================================================
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get(
-    "SECRET_KEY",
-    "change-this-secret-before-deployment"
-)
+app.secret_key = os.environ.get("SECRET_KEY")
+
+if not app.secret_key:
+    app.secret_key = "development-only-change-this-secret"
 
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SECURE"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 
-# --------------------------------------------------
+# ==================================================
 # HELPERS
-# --------------------------------------------------
+# ==================================================
 
 def response(message, success=True, **data):
+
     result = {
         "success": success,
         "message": message
     }
+
     result.update(data)
+
     return jsonify(result)
 
 
 def get_current_user():
+
     user_id = session.get("user_id")
 
     if not user_id:
@@ -41,42 +56,51 @@ def get_current_user():
 
     db = get_db()
 
-    user = db.execute(
-        """
-        SELECT id, username, full_name, phone, email,
-               role, address, is_active
-        FROM users
-        WHERE id = ?
-        """,
-        (user_id,)
-    ).fetchone()
+    try:
 
-    db.close()
+        user = db.execute(
+            """
+            SELECT id, username, full_name, phone, email,
+                   role, address, is_active
+            FROM users
+            WHERE id = ?
+            """,
+            (user_id,)
+        ).fetchone()
 
-    return user
+        return user
+
+    finally:
+        db.close()
 
 
 def login_required(role=None):
+
     def decorator(func):
+
         @wraps(func)
         def wrapper(*args, **kwargs):
 
             user = get_current_user()
 
             if not user:
+
                 return response(
                     "Please login first",
                     False
                 ), 401
 
             if not user["is_active"]:
+
                 session.clear()
+
                 return response(
                     "Account is inactive",
                     False
                 ), 403
 
             if role and user["role"] != role:
+
                 return response(
                     "Access denied",
                     False
@@ -85,10 +109,12 @@ def login_required(role=None):
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator
 
 
 def user_json(user):
+
     if not user:
         return None
 
@@ -105,6 +131,7 @@ def user_json(user):
 
 
 def product_json(product):
+
     return {
         "id": product["id"],
         "farmer_id": product["farmer_id"],
@@ -120,17 +147,50 @@ def product_json(product):
     }
 
 
-# --------------------------------------------------
-# HOME AND HEALTH
-# --------------------------------------------------
-from flask import render_template
+# ==================================================
+# HOME AND DASHBOARD PAGES
+# ==================================================
 
 @app.route("/")
 def home():
+
     return render_template("index.html")
+
+
+@app.route("/login")
+def login_page():
+
+    return render_template("login.html")
+
+
+@app.route("/customer")
+@login_required("customer")
+def customer_page():
+
+    return render_template("customer.html")
+
+
+@app.route("/farmer")
+@login_required("farmer")
+def farmer_page():
+
+    return render_template("farmer.html")
+
+
+@app.route("/admin")
+@login_required("admin")
+def admin_page():
+
+    return render_template("admin.html")
+
+
+# ==================================================
+# HEALTH
+# ==================================================
 
 @app.route("/api/health")
 def health():
+
     return response(
         "FreshKart backend is healthy",
         True,
@@ -138,88 +198,39 @@ def health():
     )
 
 
-# --------------------------------------------------
-# REGISTER CUSTOMER OR FARMER
-# Admin creates customers/farmers separately.
-# --------------------------------------------------
+# ==================================================
+# REGISTRATION
+# CUSTOMER AND FARMER ACCOUNTS CREATED BY ADMIN ONLY
+# ==================================================
 
 @app.route("/api/register", methods=["POST"])
 def register():
 
-    data = request.get_json(silent=True) or {}
-
-    username = str(data.get("username", "")).strip()
-    password = str(data.get("password", ""))
-    full_name = str(data.get("full_name", "")).strip()
-
-    role = str(data.get("role", "customer")).strip().lower()
-
-    phone = str(data.get("phone", "")).strip()
-    email = str(data.get("email", "")).strip()
-    address = str(data.get("address", "")).strip()
-
-    if not username or not password or not full_name:
-        return response(
-            "Username, password and full name are required",
-            False
-        ), 400
-
-    if len(password) < 8:
-        return response(
-            "Password must contain at least 8 characters",
-            False
-        ), 400
-
-    if role not in ("customer", "farmer"):
-        return response(
-            "Invalid registration role",
-            False
-        ), 400
-
-    try:
-        user_id = create_user(
-            username=username,
-            password=password,
-            full_name=full_name,
-            role=role,
-            phone=phone,
-            email=email,
-            address=address
-        )
-
-        return response(
-            "Registration successful",
-            True,
-            user_id=user_id
-        ), 201
-
-    except sqlite3.IntegrityError:
-        return response(
-            "Username already exists",
-            False
-        ), 409
-
-    except Exception:
-        app.logger.exception("Registration error")
-        return response(
-            "Registration failed",
-            False
-        ), 500
+    return response(
+        "Registration disabled. Contact FreshKart admin.",
+        False
+    ), 403
 
 
-# --------------------------------------------------
+# ==================================================
 # LOGIN
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/login", methods=["POST"])
 def login():
 
     data = request.get_json(silent=True) or {}
 
-    username = str(data.get("username", "")).strip()
-    password = str(data.get("password", ""))
+    username = str(
+        data.get("username", "")
+    ).strip()
+
+    password = str(
+        data.get("password", "")
+    )
 
     if not username or not password:
+
         return response(
             "Username and password are required",
             False
@@ -227,38 +238,47 @@ def login():
 
     db = get_db()
 
-    user = db.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE username = ?
-        """,
-        (username,)
-    ).fetchone()
+    try:
 
-    db.close()
+        user = db.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username = ?
+            """,
+            (username,)
+        ).fetchone()
+
+    finally:
+        db.close()
 
     if not user:
+
         return response(
             "Invalid username or password",
             False
         ), 401
 
     if not user["is_active"]:
+
         return response(
             "Your account is inactive",
             False
         ), 403
 
     try:
+
         password_valid = check_password_hash(
             user["password_hash"],
             password
         )
+
     except (ValueError, TypeError):
+
         password_valid = False
 
     if not password_valid:
+
         return response(
             "Invalid username or password",
             False
@@ -269,21 +289,23 @@ def login():
     session["user_id"] = user["id"]
     session["role"] = user["role"]
 
+    redirects = {
+        "customer": "/customer",
+        "farmer": "/farmer",
+        "admin": "/admin"
+    }
+
     return response(
         "Login successful",
         True,
         user=user_json(user),
-        redirect={
-            "customer": "/customer",
-            "farmer": "/farmer",
-            "admin": "/admin"
-        }.get(user["role"], "/")
+        redirect=redirects.get(user["role"], "/")
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # CURRENT USER
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/me")
 @login_required()
@@ -298,9 +320,9 @@ def me():
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # LOGOUT
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
@@ -313,37 +335,45 @@ def logout():
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # PUBLIC PRODUCTS
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/products", methods=["GET"])
 def products():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT *
-        FROM products
-        WHERE is_available = 1
-          AND stock_quantity > 0
-        ORDER BY created_at DESC
-        """
-    ).fetchall()
+    try:
 
-    db.close()
+        rows = db.execute(
+            """
+            SELECT *
+            FROM products
+            WHERE is_available = 1
+              AND stock_quantity > 0
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+
+        result = [
+            product_json(product)
+            for product in rows
+        ]
+
+    finally:
+        db.close()
 
     return response(
         "Products loaded",
         True,
-        products=[product_json(p) for p in rows]
+        products=result
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # CUSTOMER ORDERS
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/customer/orders", methods=["GET"])
 @login_required("customer")
@@ -353,53 +383,71 @@ def customer_orders():
 
     db = get_db()
 
-    orders = db.execute(
-        """
-        SELECT *
-        FROM orders
-        WHERE customer_id = ?
-        ORDER BY created_at DESC
-        """,
-        (user["id"],)
-    ).fetchall()
+    try:
 
-    result = []
-
-    for order in orders:
-
-        items = db.execute(
+        orders = db.execute(
             """
             SELECT *
-            FROM order_items
-            WHERE order_id = ?
+            FROM orders
+            WHERE customer_id = ?
+            ORDER BY created_at DESC
             """,
-            (order["id"],)
+            (user["id"],)
         ).fetchall()
 
-        result.append({
-            "id": order["id"],
-            "order_number": order["order_number"],
-            "delivery_date": order["delivery_date"],
-            "delivery_slot": order["delivery_slot"],
-            "delivery_address": order["delivery_address"],
-            "total": order["total_paise"] / 100,
-            "total_paise": order["total_paise"],
-            "status": order["status"],
-            "payment_method": order["payment_method"],
-            "payment_status": order["payment_status"],
-            "items": [
-                {
-                    "product_name": item["product_name"],
-                    "quantity": item["quantity"],
-                    "unit": item["unit"],
-                    "price": item["price_paise"] / 100,
-                    "subtotal": item["subtotal_paise"] / 100
-                }
-                for item in items
-            ]
-        })
+        result = []
 
-    db.close()
+        for order in orders:
+
+            items = db.execute(
+                """
+                SELECT *
+                FROM order_items
+                WHERE order_id = ?
+                """,
+                (order["id"],)
+            ).fetchall()
+
+            result.append({
+
+                "id": order["id"],
+
+                "order_number": order["order_number"],
+
+                "delivery_date": order["delivery_date"],
+
+                "delivery_slot": order["delivery_slot"],
+
+                "delivery_address": order["delivery_address"],
+
+                "total": order["total_paise"] / 100,
+
+                "total_paise": order["total_paise"],
+
+                "status": order["status"],
+
+                "payment_method": order["payment_method"],
+
+                "payment_status": order["payment_status"],
+
+                "items": [
+
+                    {
+                        "product_name": item["product_name"],
+                        "quantity": item["quantity"],
+                        "unit": item["unit"],
+                        "price": item["price_paise"] / 100,
+                        "subtotal": item["subtotal_paise"] / 100
+                    }
+
+                    for item in items
+
+                ]
+
+            })
+
+    finally:
+        db.close()
 
     return response(
         "Orders loaded",
@@ -408,9 +456,9 @@ def customer_orders():
     )
 
 
-# --------------------------------------------------
-# PLACE CUSTOMER ORDER
-# --------------------------------------------------
+# ==================================================
+# PLACE ORDER
+# ==================================================
 
 @app.route("/api/customer/orders", methods=["POST"])
 @login_required("customer")
@@ -421,9 +469,16 @@ def place_order():
     data = request.get_json(silent=True) or {}
 
     items = data.get("items", [])
-    delivery_date = str(data.get("delivery_date", "")).strip()
+
+    delivery_date = str(
+        data.get("delivery_date", "")
+    ).strip()
+
     delivery_address = str(
-        data.get("delivery_address", user["address"] or "")
+        data.get(
+            "delivery_address",
+            user["address"] or ""
+        )
     ).strip()
 
     payment_method = str(
@@ -431,32 +486,41 @@ def place_order():
     ).strip().upper()
 
     if not isinstance(items, list) or not items:
+
         return response(
             "Cart is empty",
             False
         ), 400
 
     if not delivery_address:
+
         return response(
             "Delivery address is required",
             False
         ), 400
 
     if payment_method not in ("COD", "UPI"):
+
         return response(
             "Invalid payment method",
             False
         ), 400
 
     try:
-        requested_date = date.fromisoformat(delivery_date)
+
+        requested_date = date.fromisoformat(
+            delivery_date
+        )
+
     except ValueError:
+
         return response(
             "Invalid delivery date",
             False
         ), 400
 
     if requested_date <= date.today():
+
         return response(
             "Choose a future delivery date",
             False
@@ -465,8 +529,9 @@ def place_order():
     delivery_day = requested_date.strftime("%A")
 
     if delivery_day not in ("Wednesday", "Sunday"):
+
         return response(
-            "Delivery is available only on Wednesday and Sunday",
+            "Delivery available only on Wednesday and Sunday",
             False
         ), 400
 
@@ -475,6 +540,7 @@ def place_order():
     try:
 
         total_paise = 0
+
         order_items = []
 
         for item in items:
@@ -482,14 +548,20 @@ def place_order():
             product_id = item.get("product_id")
 
             try:
-                quantity = float(item.get("quantity", 0))
+
+                quantity = float(
+                    item.get("quantity", 0)
+                )
+
             except (ValueError, TypeError):
+
                 return response(
                     "Invalid quantity",
                     False
                 ), 400
 
             if quantity <= 0:
+
                 return response(
                     "Quantity must be greater than zero",
                     False
@@ -507,27 +579,36 @@ def place_order():
             ).fetchone()
 
             if not product:
+
                 return response(
                     "Product unavailable",
                     False
                 ), 400
 
             if quantity > product["stock_quantity"]:
+
                 return response(
-                    "Insufficient stock for " + product["name"],
+                    "Insufficient stock for "
+                    + product["name"],
                     False
                 ), 400
 
             subtotal = int(
-                round(product["price_paise"] * quantity)
+                round(
+                    product["price_paise"] * quantity
+                )
             )
 
             total_paise += subtotal
 
             order_items.append({
+
                 "product": product,
+
                 "quantity": quantity,
+
                 "subtotal": subtotal
+
             })
 
         order_number = (
@@ -624,7 +705,9 @@ def place_order():
 
         db.rollback()
 
-        app.logger.exception("Order error")
+        app.logger.exception(
+            "Order placement error"
+        )
 
         return response(
             "Unable to place order",
@@ -632,12 +715,13 @@ def place_order():
         ), 500
 
     finally:
+
         db.close()
 
 
-# --------------------------------------------------
+# ==================================================
 # FARMER PRODUCTS
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/farmer/products", methods=["GET"])
 @login_required("farmer")
@@ -647,28 +731,36 @@ def farmer_products():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT *
-        FROM products
-        WHERE farmer_id = ?
-        ORDER BY created_at DESC
-        """,
-        (user["id"],)
-    ).fetchall()
+    try:
 
-    db.close()
+        rows = db.execute(
+            """
+            SELECT *
+            FROM products
+            WHERE farmer_id = ?
+            ORDER BY created_at DESC
+            """,
+            (user["id"],)
+        ).fetchall()
+
+        result = [
+            product_json(product)
+            for product in rows
+        ]
+
+    finally:
+        db.close()
 
     return response(
         "Farmer products loaded",
         True,
-        products=[product_json(p) for p in rows]
+        products=result
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # ADD FARMER PRODUCT
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/farmer/products", methods=["POST"])
 @login_required("farmer")
@@ -678,24 +770,45 @@ def add_farmer_product():
 
     data = request.get_json(silent=True) or {}
 
-    name = str(data.get("name", "")).strip()
-    category = str(data.get("category", "Vegetables")).strip()
+    name = str(
+        data.get("name", "")
+    ).strip()
 
-    description = str(data.get("description", "")).strip()
-    unit = str(data.get("unit", "kg")).strip()
+    category = str(
+        data.get("category", "Vegetables")
+    ).strip()
 
-    image_url = str(data.get("image_url", "")).strip()
+    description = str(
+        data.get("description", "")
+    ).strip()
+
+    unit = str(
+        data.get("unit", "kg")
+    ).strip()
+
+    image_url = str(
+        data.get("image_url", "")
+    ).strip()
 
     try:
-        price = float(data.get("price", 0))
-        stock = float(data.get("stock_quantity", 0))
+
+        price = float(
+            data.get("price", 0)
+        )
+
+        stock = float(
+            data.get("stock_quantity", 0)
+        )
+
     except (ValueError, TypeError):
+
         return response(
             "Invalid price or stock",
             False
         ), 400
 
     if not name or price < 0 or stock < 0:
+
         return response(
             "Enter valid product details",
             False
@@ -703,39 +816,42 @@ def add_farmer_product():
 
     db = get_db()
 
-    cursor = db.execute(
-        """
-        INSERT INTO products (
-            farmer_id,
-            name,
-            category,
-            price_paise,
-            stock_quantity,
-            unit,
-            description,
-            image_url,
-            is_available
+    try:
+
+        cursor = db.execute(
+            """
+            INSERT INTO products (
+                farmer_id,
+                name,
+                category,
+                price_paise,
+                stock_quantity,
+                unit,
+                description,
+                image_url,
+                is_available
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user["id"],
+                name,
+                category,
+                int(round(price * 100)),
+                stock,
+                unit,
+                description,
+                image_url,
+                1
+            )
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            user["id"],
-            name,
-            category,
-            int(round(price * 100)),
-            stock,
-            unit,
-            description,
-            image_url,
-            1
-        )
-    )
 
-    db.commit()
+        db.commit()
 
-    product_id = cursor.lastrowid
+        product_id = cursor.lastrowid
 
-    db.close()
+    finally:
+        db.close()
 
     return response(
         "Product added successfully",
@@ -744,11 +860,14 @@ def add_farmer_product():
     ), 201
 
 
-# --------------------------------------------------
+# ==================================================
 # UPDATE FARMER PRODUCT
-# --------------------------------------------------
+# ==================================================
 
-@app.route("/api/farmer/products/<int:product_id>", methods=["PUT"])
+@app.route(
+    "/api/farmer/products/<int:product_id>",
+    methods=["PUT"]
+)
 @login_required("farmer")
 def update_farmer_product(product_id):
 
@@ -758,101 +877,117 @@ def update_farmer_product(product_id):
 
     db = get_db()
 
-    product = db.execute(
-        """
-        SELECT *
-        FROM products
-        WHERE id = ?
-          AND farmer_id = ?
-        """,
-        (product_id, user["id"])
-    ).fetchone()
-
-    if not product:
-        db.close()
-
-        return response(
-            "Product not found",
-            False
-        ), 404
-
-    name = str(data.get("name", product["name"])).strip()
-
-    category = str(
-        data.get("category", product["category"])
-    ).strip()
-
-    description = str(
-        data.get("description", product["description"] or "")
-    ).strip()
-
-    unit = str(data.get("unit", product["unit"])).strip()
-
-    image_url = str(
-        data.get("image_url", product["image_url"] or "")
-    ).strip()
-
     try:
-        price = float(
-            data.get(
-                "price",
-                product["price_paise"] / 100
-            )
-        )
 
-        stock = float(
+        product = db.execute(
+            """
+            SELECT *
+            FROM products
+            WHERE id = ?
+              AND farmer_id = ?
+            """,
+            (
+                product_id,
+                user["id"]
+            )
+        ).fetchone()
+
+        if not product:
+
+            return response(
+                "Product not found",
+                False
+            ), 404
+
+        name = str(
+            data.get("name", product["name"])
+        ).strip()
+
+        category = str(
             data.get(
-                "stock_quantity",
+                "category",
+                product["category"]
+            )
+        ).strip()
+
+        description = str(
+            data.get(
+                "description",
+                product["description"] or ""
+            )
+        ).strip()
+
+        unit = str(
+            data.get("unit", product["unit"])
+        ).strip()
+
+        image_url = str(
+            data.get(
+                "image_url",
+                product["image_url"] or ""
+            )
+        ).strip()
+
+        try:
+
+            price = float(
+                data.get(
+                    "price",
+                    product["price_paise"] / 100
+                )
+            )
+
+            stock = float(
+                data.get(
+                    "stock_quantity",
                 product["stock_quantity"]
+                )
+            )
+
+        except (ValueError, TypeError):
+
+            return response(
+                "Invalid price or stock",
+                False
+            ), 400
+
+        if not name or price < 0 or stock < 0:
+
+            return response(
+                "Invalid product details",
+                False
+            ), 400
+
+        db.execute(
+            """
+            UPDATE products
+            SET name = ?,
+                category = ?,
+                price_paise = ?,
+                stock_quantity = ?,
+                unit = ?,
+                description = ?,
+                image_url = ?
+            WHERE id = ?
+              AND farmer_id = ?
+            """,
+            (
+                name,
+                category,
+                int(round(price * 100)),
+                stock,
+                unit,
+                description,
+                image_url,
+                product_id,
+                user["id"]
             )
         )
 
-    except (ValueError, TypeError):
+        db.commit()
 
+    finally:
         db.close()
-
-        return response(
-            "Invalid price or stock",
-            False
-        ), 400
-
-    if price < 0 or stock < 0 or not name:
-
-        db.close()
-
-        return response(
-            "Invalid product details",
-            False
-        ), 400
-
-    db.execute(
-        """
-        UPDATE products
-        SET name = ?,
-            category = ?,
-            price_paise = ?,
-            stock_quantity = ?,
-            unit = ?,
-            description = ?,
-            image_url = ?
-        WHERE id = ?
-          AND farmer_id = ?
-        """,
-        (
-            name,
-            category,
-            int(round(price * 100)),
-            stock,
-            unit,
-            description,
-            image_url,
-            product_id,
-            user["id"]
-        )
-    )
-
-    db.commit()
-    db.close()
 
     return response(
         "Product updated successfully",
@@ -860,11 +995,14 @@ def update_farmer_product(product_id):
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # DELETE FARMER PRODUCT
-# --------------------------------------------------
+# ==================================================
 
-@app.route("/api/farmer/products/<int:product_id>", methods=["DELETE"])
+@app.route(
+    "/api/farmer/products/<int:product_id>",
+    methods=["DELETE"]
+)
 @login_required("farmer")
 def delete_farmer_product(product_id):
 
@@ -872,22 +1010,29 @@ def delete_farmer_product(product_id):
 
     db = get_db()
 
-    cursor = db.execute(
-        """
-        DELETE FROM products
-        WHERE id = ?
-          AND farmer_id = ?
-        """,
-        (product_id, user["id"])
-    )
+    try:
 
-    db.commit()
+        cursor = db.execute(
+            """
+            DELETE FROM products
+            WHERE id = ?
+              AND farmer_id = ?
+            """,
+            (
+                product_id,
+                user["id"]
+            )
+        )
 
-    deleted = cursor.rowcount
+        db.commit()
 
-    db.close()
+        deleted = cursor.rowcount
+
+    finally:
+        db.close()
 
     if not deleted:
+
         return response(
             "Product not found",
             False
@@ -899,9 +1044,9 @@ def delete_farmer_product(product_id):
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # FARMER ORDERS
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/farmer/orders", methods=["GET"])
 @login_required("farmer")
@@ -911,65 +1056,88 @@ def farmer_orders():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT DISTINCT
-            o.id,
-            o.order_number,
-            o.delivery_date,
-            o.delivery_slot,
-            o.delivery_address,
-            o.status,
-            o.payment_method,
-            o.payment_status,
-            u.full_name AS customer_name,
-            u.phone AS customer_phone
-        FROM orders o
-        JOIN order_items oi ON oi.order_id = o.id
-        JOIN users u ON u.id = o.customer_id
-        WHERE oi.farmer_id = ?
-        ORDER BY o.created_at DESC
-        """,
-        (user["id"],)
-    ).fetchall()
+    try:
 
-    result = []
-
-    for order in rows:
-
-        items = db.execute(
+        rows = db.execute(
             """
-            SELECT *
-            FROM order_items
-            WHERE order_id = ?
-              AND farmer_id = ?
+            SELECT DISTINCT
+                o.id,
+                o.order_number,
+                o.delivery_date,
+                o.delivery_slot,
+                o.delivery_address,
+                o.status,
+                o.payment_method,
+                o.payment_status,
+                u.full_name AS customer_name,
+                u.phone AS customer_phone
+            FROM orders o
+            JOIN order_items oi
+                ON oi.order_id = o.id
+            JOIN users u
+                ON u.id = o.customer_id
+            WHERE oi.farmer_id = ?
+            ORDER BY o.created_at DESC
             """,
-            (order["id"], user["id"])
+            (user["id"],)
         ).fetchall()
 
-        result.append({
-            "id": order["id"],
-            "order_number": order["order_number"],
-            "customer_name": order["customer_name"],
-            "customer_phone": order["customer_phone"],
-            "delivery_date": order["delivery_date"],
-            "delivery_slot": order["delivery_slot"],
-            "delivery_address": order["delivery_address"],
-            "status": order["status"],
-            "payment_method": order["payment_method"],
-            "payment_status": order["payment_status"],
-            "items": [
-                {
-                    "product_name": item["product_name"],
-                    "quantity": item["quantity"],
-                    "unit": item["unit"],
-                    "subtotal": item["subtotal_paise"] / 100
-                }
-                for item in items
-            ]
-        })
+        result = []
 
-    db.close()
+        for order in rows:
+
+            items = db.execute(
+                """
+                SELECT *
+                FROM order_items
+                WHERE order_id = ?
+                  AND farmer_id = ?
+                """,
+                (
+                    order["id"],
+                    user["id"]
+                )
+            ).fetchall()
+
+            result.append({
+
+                "id": order["id"],
+
+                "order_number": order["order_number"],
+
+                "customer_name": order["customer_name"],
+
+                "customer_phone": order["customer_phone"],
+
+                "delivery_date": order["delivery_date"],
+
+                "delivery_slot": order["delivery_slot"],
+
+                "delivery_address": order["delivery_address"],
+
+                "status": order["status"],
+
+                "payment_method": order["payment_method"],
+
+                "payment_status": order["payment_status"],
+
+                "items": [
+
+                    {
+                        "product_name": item["product_name"],
+                        "quantity": item["quantity"],
+                        "unit": item["unit"],
+                        "subtotal": item["subtotal_paise"] / 100
+                    }
+
+                    for item in items
+
+                ]
+
+            })
+
+    finally:
+        db.close()
 
     return response(
         "Farmer orders loaded",
@@ -978,9 +1146,9 @@ def farmer_orders():
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # ADMIN DASHBOARD
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/admin/dashboard", methods=["GET"])
 @login_required("admin")
@@ -988,31 +1156,48 @@ def admin_dashboard():
 
     db = get_db()
 
-    customers = db.execute(
-        "SELECT COUNT(*) FROM users WHERE role='customer'"
-    ).fetchone()[0]
+    try:
 
-    farmers = db.execute(
-        "SELECT COUNT(*) FROM users WHERE role='farmer'"
-    ).fetchone()[0]
+        customers = db.execute(
+            """
+            SELECT COUNT(*)
+            FROM users
+            WHERE role = 'customer'
+            """
+        ).fetchone()[0]
 
-    products = db.execute(
-        "SELECT COUNT(*) FROM products"
-    ).fetchone()[0]
+        farmers = db.execute(
+            """
+            SELECT COUNT(*)
+            FROM users
+            WHERE role = 'farmer'
+            """
+        ).fetchone()[0]
 
-    orders = db.execute(
-        "SELECT COUNT(*) FROM orders"
-    ).fetchone()[0]
+        products = db.execute(
+            """
+            SELECT COUNT(*)
+            FROM products
+            """
+        ).fetchone()[0]
 
-    revenue = db.execute(
-        """
-        SELECT COALESCE(SUM(total_paise), 0)
-        FROM orders
-        WHERE status != 'Cancelled'
-        """
-    ).fetchone()[0]
+        orders = db.execute(
+            """
+            SELECT COUNT(*)
+            FROM orders
+            """
+        ).fetchone()[0]
 
-    db.close()
+        revenue = db.execute(
+            """
+            SELECT COALESCE(SUM(total_paise), 0)
+            FROM orders
+            WHERE status != 'Cancelled'
+            """
+        ).fetchone()[0]
+
+    finally:
+        db.close()
 
     return response(
         "Dashboard loaded",
@@ -1027,9 +1212,9 @@ def admin_dashboard():
     )
 
 
-# --------------------------------------------------
-# ADMIN USERS
-# --------------------------------------------------
+# ==================================================
+# ADMIN CUSTOMERS
+# ==================================================
 
 @app.route("/api/admin/customers", methods=["GET"])
 @login_required("admin")
@@ -1037,24 +1222,37 @@ def admin_customers():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT id, username, full_name, phone, email,
-               role, address, is_active, created_at
-        FROM users
-        WHERE role = 'customer'
-        ORDER BY created_at DESC
-        """
-    ).fetchall()
+    try:
 
-    db.close()
+        rows = db.execute(
+            """
+            SELECT id, username, full_name,
+                   phone, email, role, address,
+                   is_active, created_at
+            FROM users
+            WHERE role = 'customer'
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+
+        result = [
+            dict(row)
+            for row in rows
+        ]
+
+    finally:
+        db.close()
 
     return response(
         "Customers loaded",
         True,
-        customers=[dict(row) for row in rows]
+        customers=result
     )
 
+
+# ==================================================
+# ADMIN FARMERS
+# ==================================================
 
 @app.route("/api/admin/farmers", methods=["GET"])
 @login_required("admin")
@@ -1062,28 +1260,37 @@ def admin_farmers():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT id, username, full_name, phone, email,
-               role, address, is_active, created_at
-        FROM users
-        WHERE role = 'farmer'
-        ORDER BY created_at DESC
-        """
-    ).fetchall()
+    try:
 
-    db.close()
+        rows = db.execute(
+            """
+            SELECT id, username, full_name,
+                   phone, email, role, address,
+                   is_active, created_at
+            FROM users
+            WHERE role = 'farmer'
+            ORDER BY created_at DESC
+            """
+        ).fetchall()
+
+        result = [
+            dict(row)
+            for row in rows
+        ]
+
+    finally:
+        db.close()
 
     return response(
         "Farmers loaded",
         True,
-        farmers=[dict(row) for row in rows]
+        farmers=result
     )
 
 
-# --------------------------------------------------
-# ADMIN CREATE USER
-# --------------------------------------------------
+# ==================================================
+# ADMIN CREATE CUSTOMER OR FARMER
+# ==================================================
 
 @app.route("/api/admin/users", methods=["POST"])
 @login_required("admin")
@@ -1091,29 +1298,50 @@ def admin_create_user():
 
     data = request.get_json(silent=True) or {}
 
-    username = str(data.get("username", "")).strip()
-    password = str(data.get("password", ""))
-    full_name = str(data.get("full_name", "")).strip()
+    username = str(
+        data.get("username", "")
+    ).strip()
 
-    role = str(data.get("role", "customer")).strip().lower()
+    password = str(
+        data.get("password", "")
+    )
 
-    phone = str(data.get("phone", "")).strip()
-    email = str(data.get("email", "")).strip()
-    address = str(data.get("address", "")).strip()
+    full_name = str(
+        data.get("full_name", "")
+    ).strip()
+
+    role = str(
+        data.get("role", "customer")
+    ).strip().lower()
+
+    phone = str(
+        data.get("phone", "")
+    ).strip()
+
+    email = str(
+        data.get("email", "")
+    ).strip()
+
+    address = str(
+        data.get("address", "")
+    ).strip()
 
     if not username or not password or not full_name:
+
         return response(
             "Username, password and full name required",
             False
         ), 400
 
     if len(password) < 8:
+
         return response(
             "Password must contain at least 8 characters",
             False
         ), 400
 
     if role not in ("customer", "farmer"):
+
         return response(
             "Only customer and farmer accounts can be created",
             False
@@ -1144,12 +1372,26 @@ def admin_create_user():
             False
         ), 409
 
+    except Exception:
 
-# --------------------------------------------------
-# ADMIN ACTIVATE / DEACTIVATE USER
-# --------------------------------------------------
+        app.logger.exception(
+            "Admin user creation error"
+        )
 
-@app.route("/api/admin/users/<int:user_id>/status", methods=["PUT"])
+        return response(
+            "Unable to create user",
+            False
+        ), 500
+
+
+# ==================================================
+# ADMIN USER STATUS
+# ==================================================
+
+@app.route(
+    "/api/admin/users/<int:user_id>/status",
+    methods=["PUT"]
+)
 @login_required("admin")
 def admin_user_status(user_id):
 
@@ -1158,6 +1400,7 @@ def admin_user_status(user_id):
     active = data.get("is_active")
 
     if active not in (True, False, 0, 1):
+
         return response(
             "is_active must be true or false",
             False
@@ -1165,20 +1408,30 @@ def admin_user_status(user_id):
 
     db = get_db()
 
-    cursor = db.execute(
-        """
-        UPDATE users
-        SET is_active = ?
-        WHERE id = ?
-          AND role IN ('customer', 'farmer')
-        """,
-        (int(active), user_id)
-    )
+    try:
 
-    db.commit()
-    db.close()
+        cursor = db.execute(
+            """
+            UPDATE users
+            SET is_active = ?
+            WHERE id = ?
+              AND role IN ('customer', 'farmer')
+            """,
+            (
+                int(active),
+                user_id
+            )
+        )
 
-    if cursor.rowcount == 0:
+        db.commit()
+
+        updated = cursor.rowcount
+
+    finally:
+        db.close()
+
+    if not updated:
+
         return response(
             "User not found",
             False
@@ -1190,9 +1443,9 @@ def admin_user_status(user_id):
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # ADMIN PRODUCTS
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/admin/products", methods=["GET"])
 @login_required("admin")
@@ -1200,26 +1453,30 @@ def admin_products():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT p.*, u.full_name AS farmer_name
-        FROM products p
-        LEFT JOIN users u ON u.id = p.farmer_id
-        ORDER BY p.created_at DESC
-        """
-    ).fetchall()
+    try:
 
-    db.close()
+        rows = db.execute(
+            """
+            SELECT p.*, u.full_name AS farmer_name
+            FROM products p
+            LEFT JOIN users u
+                ON u.id = p.farmer_id
+            ORDER BY p.created_at DESC
+            """
+        ).fetchall()
 
-    result = []
+        result = []
 
-    for row in rows:
+        for row in rows:
 
-        item = product_json(row)
+            item = product_json(row)
 
-        item["farmer_name"] = row["farmer_name"]
+            item["farmer_name"] = row["farmer_name"]
 
-        result.append(item)
+            result.append(item)
+
+    finally:
+        db.close()
 
     return response(
         "Products loaded",
@@ -1228,9 +1485,9 @@ def admin_products():
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # ADMIN ORDERS
-# --------------------------------------------------
+# ==================================================
 
 @app.route("/api/admin/orders", methods=["GET"])
 @login_required("admin")
@@ -1238,36 +1495,51 @@ def admin_orders():
 
     db = get_db()
 
-    rows = db.execute(
-        """
-        SELECT o.*, u.full_name AS customer_name,
-               u.phone AS customer_phone
-        FROM orders o
-        JOIN users u ON u.id = o.customer_id
-        ORDER BY o.created_at DESC
-        """
-    ).fetchall()
+    try:
 
-    db.close()
+        rows = db.execute(
+            """
+            SELECT o.*, 
+                   u.full_name AS customer_name,
+                   u.phone AS customer_phone
+            FROM orders o
+            JOIN users u
+                ON u.id = o.customer_id
+            ORDER BY o.created_at DESC
+            """
+        ).fetchall()
+
+        result = [
+            dict(row)
+            for row in rows
+        ]
+
+    finally:
+        db.close()
 
     return response(
         "Orders loaded",
         True,
-        orders=[dict(row) for row in rows]
+        orders=result
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # ADMIN UPDATE ORDER STATUS
-# --------------------------------------------------
+# ==================================================
 
-@app.route("/api/admin/orders/<int:order_id>/status", methods=["PUT"])
+@app.route(
+    "/api/admin/orders/<int:order_id>/status",
+    methods=["PUT"]
+)
 @login_required("admin")
 def admin_order_status(order_id):
 
     data = request.get_json(silent=True) or {}
 
-    status = str(data.get("status", "")).strip()
+    status = str(
+        data.get("status", "")
+    ).strip()
 
     allowed = (
         "Placed",
@@ -1279,6 +1551,7 @@ def admin_order_status(order_id):
     )
 
     if status not in allowed:
+
         return response(
             "Invalid order status",
             False
@@ -1286,19 +1559,29 @@ def admin_order_status(order_id):
 
     db = get_db()
 
-    cursor = db.execute(
-        """
-        UPDATE orders
-        SET status = ?
-        WHERE id = ?
-        """,
-        (status, order_id)
-    )
+    try:
 
-    db.commit()
-    db.close()
+        cursor = db.execute(
+            """
+            UPDATE orders
+            SET status = ?
+            WHERE id = ?
+            """,
+            (
+                status,
+                order_id
+            )
+        )
 
-    if cursor.rowcount == 0:
+        db.commit()
+
+        updated = cursor.rowcount
+
+    finally:
+        db.close()
+
+    if not updated:
+
         return response(
             "Order not found",
             False
@@ -1310,9 +1593,9 @@ def admin_order_status(order_id):
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # FARMER UPDATE ORDER STATUS
-# --------------------------------------------------
+# ==================================================
 
 @app.route(
     "/api/farmer/orders/<int:order_id>/status",
@@ -1325,7 +1608,9 @@ def farmer_order_status(order_id):
 
     data = request.get_json(silent=True) or {}
 
-    status = str(data.get("status", "")).strip()
+    status = str(
+        data.get("status", "")
+    ).strip()
 
     allowed = (
         "Confirmed",
@@ -1335,6 +1620,7 @@ def farmer_order_status(order_id):
     )
 
     if status not in allowed:
+
         return response(
             "Invalid order status",
             False
@@ -1342,36 +1628,46 @@ def farmer_order_status(order_id):
 
     db = get_db()
 
-    order = db.execute(
-        """
-        SELECT o.id
-        FROM orders o
-        JOIN order_items oi ON oi.order_id = o.id
-        WHERE o.id = ?
-          AND oi.farmer_id = ?
-        """,
-        (order_id, user["id"])
-    ).fetchone()
+    try:
 
-    if not order:
+        order = db.execute(
+            """
+            SELECT o.id
+            FROM orders o
+            JOIN order_items oi
+                ON oi.order_id = o.id
+            WHERE o.id = ?
+              AND oi.farmer_id = ?
+            """,
+            (
+                order_id,
+                user["id"]
+            )
+        ).fetchone()
+
+        if not order:
+
+            return response(
+                "Order not found",
+                False
+            ), 404
+
+        db.execute(
+            """
+            UPDATE orders
+            SET status = ?
+            WHERE id = ?
+            """,
+            (
+                status,
+                order_id
+            )
+        )
+
+        db.commit()
+
+    finally:
         db.close()
-
-        return response(
-            "Order not found",
-            False
-        ), 404
-
-    db.execute(
-        """
-        UPDATE orders
-        SET status = ?
-        WHERE id = ?
-        """,
-        (status, order_id)
-    )
-
-    db.commit()
-    db.close()
 
     return response(
         "Order status updated",
@@ -1379,9 +1675,9 @@ def farmer_order_status(order_id):
     )
 
 
-# --------------------------------------------------
+# ==================================================
 # ERROR HANDLERS
-# --------------------------------------------------
+# ==================================================
 
 @app.errorhandler(404)
 def not_found(error):
@@ -1404,7 +1700,9 @@ def method_not_allowed(error):
 @app.errorhandler(500)
 def internal_error(error):
 
-    app.logger.exception("Internal server error")
+    app.logger.exception(
+        "Internal server error"
+    )
 
     return response(
         "Internal server error",
@@ -1412,13 +1710,18 @@ def internal_error(error):
     ), 500
 
 
-# --------------------------------------------------
-# START
-# --------------------------------------------------
+# ==================================================
+# DATABASE INITIALIZATION
+# ==================================================
+
+init_db()
+
+
+# ==================================================
+# START APPLICATION
+# ==================================================
 
 if __name__ == "__main__":
-
-    init_db()
 
     app.run(
         host="0.0.0.0",
