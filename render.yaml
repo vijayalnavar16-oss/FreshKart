@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: freshkart
+    runtime: python
+    plan: free
+    healthCheckPath: /login
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: UPI_ID
+        value: 8296863406@ybl

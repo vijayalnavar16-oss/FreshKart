@@ -1,340 +1,183 @@
-
+"""Database setup for FreshKart. Uses SQLite. Never drops or resets data."""
 import os
 import sqlite3
-from pathlib import Path
+import sys
+
+from flask import g
 from werkzeug.security import generate_password_hash
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get("DATABASE_PATH") or os.path.join(BASE_DIR, "freshkart.db")
+MIN_ADMIN_PASSWORD = 10
 
-BASE_DIR = Path(__file__).resolve().parent
-DATABASE_DIR = BASE_DIR / "instance"
-DATABASE_PATH = DATABASE_DIR / "freshkart.db"
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'farmer', 'customer')),
+    full_name TEXT NOT NULL,
+    address TEXT NOT NULL DEFAULT '',
+    phone_number TEXT UNIQUE,
+    is_active INTEGER NOT NULL DEFAULT 1
+);
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    farmer_id INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    price REAL NOT NULL CHECK (price >= 0),
+    unit TEXT NOT NULL,
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+    description TEXT NOT NULL DEFAULT '',
+    image TEXT NOT NULL DEFAULT '',
+    deleted INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    customer_id INTEGER NOT NULL REFERENCES users(id),
+    total REAL NOT NULL,
+    delivery_charge REAL NOT NULL,
+    address TEXT NOT NULL,
+    delivery_date TEXT NOT NULL,
+    payment_method TEXT NOT NULL CHECK (payment_method IN ('COD', 'UPI')),
+    status TEXT NOT NULL DEFAULT 'Pending',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    customer_phone TEXT NOT NULL DEFAULT '',
+    cashfree_order_id TEXT,
+    cashfree_session_id TEXT,
+    payment_status TEXT NOT NULL DEFAULT 'pending',
+    stock_released INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES orders(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    price REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+"""
+
+
+def connect():
+    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 
 def get_db():
-    DATABASE_DIR.mkdir(parents=True, exist_ok=True)
+    """Per-request connection, closed automatically at the end of the request."""
+    if "db" not in g:
+        g.db = connect()
+    return g.db
 
-    connection = sqlite3.connect(
-        DATABASE_PATH,
-        timeout=30
-    )
 
-    connection.row_factory = sqlite3.Row
+def close_db(_exc=None):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
 
-    connection.execute("PRAGMA foreign_keys = ON")
-    connection.execute("PRAGMA busy_timeout = 30000")
 
-    return connection
+def _admin_credentials():
+    username = os.environ.get("ADMIN_USERNAME", "").strip()
+    password = os.environ.get("ADMIN_PASSWORD", "")
+    if not username or not password:
+        return None, None
+    if len(password) < MIN_ADMIN_PASSWORD:
+        raise SystemExit(f"ADMIN_PASSWORD must be at least {MIN_ADMIN_PASSWORD} characters.")
+    return username, password
 
 
 def init_db():
-    DATABASE_DIR.mkdir(parents=True, exist_ok=True)
-
-    connection = get_db()
-
-    try:
-        connection.executescript("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            username TEXT NOT NULL UNIQUE,
-            password_hash TEXT NOT NULL,
-
-            full_name TEXT NOT NULL,
-            phone TEXT,
-            email TEXT,
-
-            role TEXT NOT NULL
-                CHECK(role IN ('customer', 'farmer', 'admin')),
-
-            address TEXT,
-
-            is_active INTEGER NOT NULL DEFAULT 1,
-
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-
-
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            farmer_id INTEGER,
-
-            name TEXT NOT NULL,
-            category TEXT NOT NULL,
-
-            price_paise INTEGER NOT NULL
-                CHECK(price_paise >= 0),
-
-            stock_quantity REAL NOT NULL DEFAULT 0
-                CHECK(stock_quantity >= 0),
-
-            unit TEXT NOT NULL DEFAULT 'kg',
-
-            description TEXT,
-
-            image_url TEXT,
-
-            is_available INTEGER NOT NULL DEFAULT 1,
-
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY(farmer_id)
-                REFERENCES users(id)
-                ON DELETE SET NULL
-        );
-
-
-        CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            customer_id INTEGER NOT NULL,
-
-            order_number TEXT NOT NULL UNIQUE,
-
-            delivery_date TEXT NOT NULL,
-
-            delivery_slot TEXT NOT NULL
-                CHECK(delivery_slot IN ('Wednesday', 'Sunday')),
-
-            delivery_address TEXT NOT NULL,
-
-            total_paise INTEGER NOT NULL DEFAULT 0,
-
-            delivery_charge_paise INTEGER NOT NULL DEFAULT 0,
-
-            status TEXT NOT NULL DEFAULT 'Placed',
-
-            payment_method TEXT DEFAULT 'Cash on Delivery',
-
-            payment_status TEXT DEFAULT 'Pending',
-
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY(customer_id)
-                REFERENCES users(id)
-                ON DELETE RESTRICT
-        );
-
-
-        CREATE TABLE IF NOT EXISTS order_items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            order_id INTEGER NOT NULL,
-
-            product_id INTEGER,
-
-            farmer_id INTEGER,
-
-            product_name TEXT NOT NULL,
-
-            quantity REAL NOT NULL
-                CHECK(quantity > 0),
-
-            unit TEXT NOT NULL,
-
-            price_paise INTEGER NOT NULL,
-
-            subtotal_paise INTEGER NOT NULL,
-
-            FOREIGN KEY(order_id)
-                REFERENCES orders(id)
-                ON DELETE CASCADE,
-
-            FOREIGN KEY(product_id)
-                REFERENCES products(id)
-                ON DELETE SET NULL,
-
-            FOREIGN KEY(farmer_id)
-                REFERENCES users(id)
-                ON DELETE SET NULL
-        );
-
-
-        CREATE TABLE IF NOT EXISTS delivery_schedule (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            delivery_day TEXT NOT NULL
-                CHECK(delivery_day IN ('Wednesday', 'Sunday')),
-
-            delivery_date TEXT NOT NULL UNIQUE,
-
-            start_time TEXT DEFAULT '08:00',
-
-            end_time TEXT DEFAULT '18:00',
-
-            is_active INTEGER NOT NULL DEFAULT 1,
-
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        );
-
-
-        CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            user_id INTEGER NOT NULL,
-
-            title TEXT NOT NULL,
-
-            message TEXT NOT NULL,
-
-            is_read INTEGER NOT NULL DEFAULT 0,
-
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-
-            FOREIGN KEY(user_id)
-                REFERENCES users(id)
-                ON DELETE CASCADE
-        );
-
-
-        CREATE INDEX IF NOT EXISTS idx_products_farmer
-        ON products(farmer_id);
-
-
-        CREATE INDEX IF NOT EXISTS idx_products_category
-        ON products(category);
-
-
-        CREATE INDEX IF NOT EXISTS idx_orders_customer
-        ON orders(customer_id);
-
-
-        CREATE INDEX IF NOT EXISTS idx_orders_delivery
-        ON orders(delivery_date);
-
-
-        CREATE INDEX IF NOT EXISTS idx_order_items_order
-        ON order_items(order_id);
-
-
-        CREATE INDEX IF NOT EXISTS idx_notifications_user
-        ON notifications(user_id);
-        """)
-
-        create_default_admin(connection)
-
-        connection.commit()
-
-    finally:
-        connection.close()
-
-
-def create_default_admin(connection):
-    username = os.environ.get(
-        "FRESHKART_ADMIN_USERNAME",
-        "admin"
+    """Create tables if missing and create the first admin if none exists."""
+    conn = connect()
+    conn.executescript(SCHEMA)
+    user_columns = {row["name"] for row in conn.execute("PRAGMA table_info(users)")}
+    if "phone_number" not in user_columns:
+        conn.execute("ALTER TABLE users ADD COLUMN phone_number TEXT")
+    conn.execute(
+        """CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_number
+           ON users(phone_number) WHERE phone_number IS NOT NULL"""
     )
-
-    password = os.environ.get(
-        "FRESHKART_ADMIN_PASSWORD",
-        "ChangeMe123!"
-    )
-
-    existing_admin = connection.execute(
-        """
-        SELECT id
-        FROM users
-        WHERE username = ?
-          AND role = 'admin'
-        """,
-        (username,)
-    ).fetchone()
-
-    if existing_admin:
-        return
-
-    password_hash = generate_password_hash(password)
-
-    connection.execute(
-        """
-        INSERT INTO users (
-            username,
-            password_hash,
-            full_name,
-            role,
-            is_active
-        )
-        VALUES (?, ?, ?, ?, ?)
-        """,
-        (
-            username,
-            password_hash,
-            "FreshKart Administrator",
-            "admin",
-            1
-        )
-    )
-
-
-def get_user_by_username(username):
-    connection = get_db()
-
-    try:
-        return connection.execute(
-            """
-            SELECT *
-            FROM users
-            WHERE username = ?
-              AND is_active = 1
-            """,
-            (username,)
-        ).fetchone()
-
-    finally:
-        connection.close()
-
-
-def create_user(
-    username,
-    password,
-    full_name,
-    role,
-    phone=None,
-    email=None,
-    address=None
-):
-    if role not in ("customer", "farmer"):
-        raise ValueError(
-            "Only customer and farmer registration is allowed."
-        )
-
-    password_hash = generate_password_hash(password)
-
-    connection = get_db()
-
-    try:
-        cursor = connection.execute(
-            """
-            INSERT INTO users (
-                username,
-                password_hash,
-                full_name,
-                phone,
-                email,
-                role,
-                address
+    order_columns = {row["name"] for row in conn.execute("PRAGMA table_info(orders)")}
+    migrations = {
+        "customer_phone": "ALTER TABLE orders ADD COLUMN customer_phone TEXT NOT NULL DEFAULT ''",
+        "cashfree_order_id": "ALTER TABLE orders ADD COLUMN cashfree_order_id TEXT",
+        "cashfree_session_id": "ALTER TABLE orders ADD COLUMN cashfree_session_id TEXT",
+        "payment_status": "ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'pending'",
+        "stock_released": "ALTER TABLE orders ADD COLUMN stock_released INTEGER NOT NULL DEFAULT 0",
+    }
+    for column, statement in migrations.items():
+        if column not in order_columns:
+            conn.execute(statement)
+    legacy_customers = conn.execute(
+        """SELECT u.id, (
+               SELECT o.customer_phone FROM orders o
+               WHERE o.customer_id = u.id AND o.customer_phone != ''
+               ORDER BY o.id DESC LIMIT 1
+           ) AS customer_phone
+           FROM users u WHERE u.role = 'customer' AND u.phone_number IS NULL"""
+    ).fetchall()
+    for customer in legacy_customers:
+        phone = customer["customer_phone"] or ""
+        digits = "".join(character for character in phone if character.isdigit())
+        if len(digits) == 10 and digits[0] in "6789":
+            phone = f"+91{digits}"
+        elif len(digits) == 12 and digits.startswith("91"):
+            phone = f"+{digits}"
+        else:
+            continue
+        if not conn.execute(
+            "SELECT 1 FROM users WHERE phone_number = ?", (phone,)
+        ).fetchone():
+            conn.execute(
+                "UPDATE users SET phone_number = ? WHERE id = ?",
+                (phone, customer["id"]),
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                username,
-                password_hash,
-                full_name,
-                phone,
-                email,
-                role,
-                address
-            )
+    username, password = _admin_credentials()
+    has_admin = conn.execute("SELECT 1 FROM users WHERE role = 'admin'").fetchone()
+    if username and not has_admin:
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, 'admin', 'Administrator')",
+            (username, generate_password_hash(password)),
         )
+    conn.commit()
+    conn.close()
 
-        connection.commit()
 
-        return cursor.lastrowid
-
-    finally:
-        connection.close()
+def reset_admin_password():
+    """Change the admin password from ADMIN_USERNAME / ADMIN_PASSWORD. Keeps all other data."""
+    username, password = _admin_credentials()
+    if not username:
+        raise SystemExit("Set ADMIN_USERNAME and ADMIN_PASSWORD first.")
+    conn = connect()
+    conn.executescript(SCHEMA)
+    row = conn.execute("SELECT id, role FROM users WHERE username = ?", (username,)).fetchone()
+    if row is None:
+        conn.execute(
+            "INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, 'admin', 'Administrator')",
+            (username, generate_password_hash(password)),
+        )
+    elif row["role"] != "admin":
+        conn.close()
+        raise SystemExit("That username belongs to a non-admin account. Choose a different ADMIN_USERNAME.")
+    else:
+        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?",
+                     (generate_password_hash(password), row["id"]))
+    conn.commit()
+    conn.close()
 
 
 if __name__ == "__main__":
-    init_db()
-    print("FreshKart database initialized successfully.")
+    if "--reset-admin" in sys.argv:
+        reset_admin_password()
+        print("Admin password updated. Other data was not changed.")
+    else:
+        init_db()
+        print("Database ready.")

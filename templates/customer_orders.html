@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>My orders</h1>
+  {% for order in orders %}
+    <a class="customer-order-link" href="{{ url_for('shop.customer_order', order_id=order['id']) }}">
+      <span><strong>Order #{{ order['id'] }}</strong><small>Delivery date: {{ order['delivery_date'] }} · Delivery time: to be confirmed</small></span>
+      <span>₹{{ '%.2f'|format(order['total']) }}<small>{{ order['payment_status']|replace('_', ' ')|title }} · {{ order['status'] }}</small></span>
+    </a>
+  {% else %}
+    <p class="muted">You haven’t placed any orders yet.</p>
+    <a class="btn" href="{{ url_for('shop.listing') }}">Browse vegetables</a>
+  {% endfor %}
+</section>
+{% endblock %}

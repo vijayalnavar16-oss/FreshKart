@@ -1,0 +1,9 @@
+*.db
+*.sqlite
+*.sqlite3
+.venv/
+__pycache__/
+*.py[cod]
+static/uploads/*
+!static/uploads/.gitkeep
+.env

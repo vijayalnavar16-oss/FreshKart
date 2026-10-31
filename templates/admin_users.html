@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Create account</h2>
+  <form method="post" action="{{ url_for('admin.users') }}" class="grid-form">
+    <input type="hidden" name="action" value="create">
+    <label>Username
+      <input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}">
+    </label>
+    <label>Full name
+      <input name="full_name" required maxlength="80">
+    </label>
+    <label>Customer mobile number (+91XXXXXXXXXX)
+      <input type="tel" name="phone_number" pattern="\+91[6-9][0-9]{9}" maxlength="13" autocomplete="tel" required>
+    </label>
+    <label>Temporary password (8+ characters)
+      <input type="password" name="password" required minlength="8" autocomplete="new-password">
+    </label>
+    <label>Role
+      <select name="role" id="account-role">
+        <option value="customer">Customer</option>
+        <option value="farmer">Farmer</option>
+      </select>
+    </label>
+    <label>Address
+      <input name="address" maxlength="300">
+    </label>
+    <button class="btn" type="submit">Create account</button>
+  </form>
+</section>
+<script>
+  const accountRole = document.getElementById("account-role");
+  const customerPhone = document.querySelector('input[name="phone_number"]');
+  const syncCustomerPhone = () => {
+    customerPhone.required = accountRole.value === "customer";
+  };
+  accountRole.addEventListener("change", syncCustomerPhone);
+  syncCustomerPhone();
+</script>
+
+<section class="card">
+  <h2>Users</h2>
+  <form method="get" action="{{ url_for('admin.users') }}" class="search">
+    <input name="q" value="{{ q }}" placeholder="Search by name or username">
+    <button class="btn" type="submit">Search</button>
+  </form>
+  <div class="table-wrap">
+    <table class="list">
+      <thead><tr><th>Name</th><th>Username</th><th>Mobile</th><th>Role</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u['full_name'] }}</td>
+          <td>{{ u['username'] }}</td>
+          <td>
+            {% if u['role'] == 'customer' %}
+            <form method="post" action="{{ url_for('admin.users') }}" class="stack">
+              <input type="hidden" name="action" value="update_phone">
+              <input type="hidden" name="user_id" value="{{ u['id'] }}">
+              <input type="tel" name="phone_number" value="{{ u['phone_number'] or '' }}"
+                     pattern="\+91[6-9][0-9]{9}" maxlength="13" autocomplete="tel" required
+                     aria-label="Mobile number for {{ u['full_name'] }}">
+              <button class="btn small" type="submit">Save mobile</button>
+            </form>
+            {% else %}
+            {{ u['phone_number'] or 'Not linked' }}
+            {% endif %}
+          </td>
+          <td>{{ u['role'] }}</td>
+          <td>{{ 'Active' if u['is_active'] else 'Inactive' }}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin.users') }}" data-confirm="Change this account's status?">
+              <input type="hidden" name="action" value="toggle">
+              <input type="hidden" name="user_id" value="{{ u['id'] }}">
+              <button class="btn small" type="submit">{{ 'Deactivate' if u['is_active'] else 'Activate' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="muted">No accounts found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

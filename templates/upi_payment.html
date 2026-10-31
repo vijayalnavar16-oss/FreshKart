@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card payment-card">
+  <p class="admin-eyebrow">DIRECT UPI PAYMENT</p>
+  <h1>Pay for order #{{ order['id'] }}</h1>
+  <p>Amount to pay: <strong>₹{{ '%.2f'|format(order['total']) }}</strong></p>
+  <p>Pay directly to <strong>{{ upi_id }}</strong>. No payment gateway is used.</p>
+  <h2>Choose your UPI app</h2>
+  <div class="upi-app-grid">
+    {% for app in payment_apps %}
+      <a class="upi-app {{ app['class'] }}" href="{{ app['url'] }}">
+        <span class="upi-app-mark" aria-hidden="true">{{ app['mark'] }}</span>
+        <span>{{ app['name'] }}</span>
+      </a>
+    {% endfor %}
+  </div>
+  <p class="muted">If an app does not open, scan this QR code or choose “Other UPI app”.</p>
+  <img class="upi-qr" src="{{ qr_data_url }}" alt="UPI payment QR code">
+  <p class="muted payment-note">After paying, return here and tell the store you have paid. The order remains pending until the store checks its UPI account and confirms it.</p>
+  <form method="post" action="{{ url_for('shop.upi_payment_submitted', order_id=order['id']) }}">
+    <button class="btn" type="submit">I have completed payment</button>
+  </form>
+</section>
+{% endblock %}

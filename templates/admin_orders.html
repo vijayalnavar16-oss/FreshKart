@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h1>Customer orders</h1>
+  <form method="post" class="actions">
+    <input type="hidden" name="action" value="set_free_delivery">
+    <input type="hidden" name="free_delivery" value="{{ '0' if free_delivery else '1' }}">
+    {% if free_delivery %}
+      <p>Free delivery is enabled for new orders. Existing orders are unchanged.</p>
+      <button class="btn" type="submit">Restore ₹30 delivery charge</button>
+    {% else %}
+      <p>New orders currently have a ₹30 delivery charge.</p>
+      <button class="btn" type="submit">Enable free delivery</button>
+    {% endif %}
+  </form>
+  <div class="table-wrap">
+    <table class="list">
+      <thead>
+        <tr>
+          <th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th>
+          <th>Address</th><th>Payment</th><th>Payment status</th><th>Order status</th><th>Delivery charge</th><th>Total</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td>#{{ order['id'] }}<br><small>{{ order['created_at'] }}</small></td>
+          <td>{{ order['full_name'] }}<br><small>@{{ order['username'] }}</small></td>
+          <td>
+            {% for item in order_items[order['id']] %}
+              {{ item['name'] }} × {{ item['quantity'] }} — ₹{{ '%.2f'|format(item['price']) }}<br>
+            {% else %}
+              <span class="muted">No items recorded</span>
+            {% endfor %}
+          </td>
+          <td>{{ order['delivery_date'] }}</td>
+          <td>{{ order['address'] }}</td>
+          <td>{{ order['payment_method'] }}</td>
+          <td>{{ order['payment_status']|replace('_', ' ')|title }}</td>
+          <td>{{ order['status'] }}</td>
+          <td>₹{{ '%.2f'|format(order['delivery_charge']) }}</td>
+          <td>₹{{ '%.2f'|format(order['total']) }}</td>
+          <td>
+            {% if order['payment_method'] == 'UPI' and order['payment_status'] in ('pending', 'verification_requested') and order['status'] == 'Pending' %}
+              <form method="post" action="{{ url_for('admin.verify_upi_payment', order_id=order['id']) }}" class="stack">
+                <button class="btn small" type="submit">Verify payment &amp; confirm</button>
+              </form>
+              <form method="post" action="{{ url_for('admin.cancel_unpaid_upi_order', order_id=order['id']) }}">
+                <button class="btn small" type="submit">Cancel unpaid order</button>
+              </form>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="11" class="muted">No orders yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

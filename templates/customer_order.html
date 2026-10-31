@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card customer-order">
+  <p class="admin-eyebrow">ORDER DETAILS</p>
+  <h1>Order #{{ order['id'] }}</h1>
+  {% if order['payment_status'] == 'paid' %}
+    <p class="payment-confirmed">Payment received — your order is confirmed and marked as ordered.</p>
+    <p class="payment-confirmed">Delivery date: {{ order['delivery_date'] }}</p>
+  {% elif order['payment_method'] == 'UPI' %}
+    {% if order['payment_status'] == 'verification_requested' %}
+      <p class="payment-pending">You reported payment. The order stays pending until the store verifies it.</p>
+    {% else %}
+      <p class="payment-pending">UPI payment is not verified yet. Order status: {{ order['status'] }}.</p>
+    {% endif %}
+    {% if order['payment_status'] == 'pending' %}
+      <a class="btn" href="{{ url_for('shop.upi_checkout', order_id=order['id']) }}">Pay by UPI</a>
+    {% endif %}
+  {% else %}
+    <p class="payment-pending">Order placed. Payment is due on delivery.</p>
+  {% endif %}
+  <h2>Items ordered</h2>
+  <div class="table-wrap">
+    <table class="list">
+      <thead><tr><th>Item</th><th>Quantity</th><th>Price</th><th>Line total</th></tr></thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>{{ item['name'] }}</td><td>{{ item['quantity'] }}</td>
+          <td>₹{{ '%.2f'|format(item['price']) }}</td>
+          <td>₹{{ '%.2f'|format(item['price'] * item['quantity']) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="summary">
+    <p>Delivery date <strong>{{ order['delivery_date'] }}</strong></p>
+    <p>Delivery time <strong>To be confirmed by the store</strong></p>
+    <p>Delivery address <strong>{{ order['address'] }}</strong></p>
+    <p>Contact mobile <strong>{{ order['customer_phone'] }}</strong></p>
+    <p>Delivery charge <strong>{{ 'Free' if order['delivery_charge'] == 0 else '₹%.2f'|format(order['delivery_charge']) }}</strong></p>
+    <p class="total">Order total <span>₹{{ '%.2f'|format(order['total']) }}</span></p>
+  </div>
+  <a class="tile" href="{{ url_for('shop.customer_orders') }}">All my orders</a>
+</section>
+{% endblock %}
