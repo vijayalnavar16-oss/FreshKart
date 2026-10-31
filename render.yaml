@@ -9,9 +9,9 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
-      - key: ADMIN_USERNAME
+      - key: VIJAY
         sync: false
-      - key: ADMIN_PASSWORD
+      - key: Freshkart@26
         sync: false
       - key: UPI_ID
         value: 8296863406@ybl
