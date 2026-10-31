@@ -1,4 +1,3 @@
-
 import os
 import sqlite3
 from functools import wraps
@@ -200,16 +199,62 @@ def health():
 
 # ==================================================
 # REGISTRATION
-# CUSTOMER AND FARMER ACCOUNTS CREATED BY ADMIN ONLY
+# PUBLIC CUSTOMER REGISTRATION ENABLED
 # ==================================================
 
 @app.route("/api/register", methods=["POST"])
 def register():
+    data = request.get_json(silent=True) or {}
 
-    return response(
-        "Registration disabled. Contact FreshKart admin.",
-        False
-    ), 403
+    username = str(data.get("username", "")).strip()
+    password = str(data.get("password", ""))
+    full_name = str(data.get("full_name", "")).strip()
+    phone = str(data.get("phone", "")).strip()
+    email = str(data.get("email", "")).strip()
+    address = str(data.get("address", "")).strip()
+
+    if not username or not password or not full_name:
+        return response(
+            "Username, password and full name are required",
+            False
+        ), 400
+
+    if len(password) < 8:
+        return response(
+            "Password must contain at least 8 characters",
+            False
+        ), 400
+
+    try:
+        # Force role to be strictly 'customer' for public registration
+        user_id = create_user(
+            username=username,
+            password=password,
+            full_name=full_name,
+            role="customer",
+            phone=phone,
+            email=email,
+            address=address
+        )
+
+        return response(
+            "Customer registration successful. Please login.",
+            True,
+            user_id=user_id
+        ), 201
+
+    except sqlite3.IntegrityError:
+        return response(
+            "Username already exists",
+            False
+        ), 409
+
+    except Exception:
+        app.logger.exception("Public registration error")
+        return response(
+            "Unable to register user",
+            False
+        ), 500
 
 
 # ==================================================
