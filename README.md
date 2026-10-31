@@ -8,8 +8,8 @@ FreshKart is a Flask and SQLite vegetable-market application.
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-$env:ADMIN_USERNAME = "VIJAY"
-$env:ADMIN_PASSWORD = "Freshkart@26"
+$env:ADMIN_USERNAME = "your-admin-username"
+$env:ADMIN_PASSWORD = "choose-a-unique-strong-password"
 python app.py
 ```
 
