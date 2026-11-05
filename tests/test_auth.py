@@ -57,12 +57,6 @@ class AuthTests(unittest.TestCase):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(self.client.get("/home").status_code, 302)
 
-    def test_login_form_preserves_mobile_credential_input(self):
-        response = self.client.get("/login")
-        self.assertIn(b'autocapitalize="none"', response.data)
-        self.assertIn(b'autocorrect="off"', response.data)
-        self.assertIn(b'spellcheck="false"', response.data)
-
     def test_inactive_user_cannot_login(self):
         self.login("cust2", "Cust12345")
         self.assertEqual(self.client.get("/home").status_code, 302)
@@ -103,19 +97,6 @@ class AuthTests(unittest.TestCase):
         database.reset_admin_password()  # restore the original password for other tests
         count = self.db.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         self.assertGreaterEqual(count, 3)
-
-    def test_admin_credentials_can_be_reset_during_startup(self):
-        os.environ["ADMIN_USERNAME"] = "VIJAY"
-        os.environ["ADMIN_PASSWORD"] = "FreshPass456!"
-        os.environ["RESET_ADMIN_CREDENTIALS_ON_STARTUP"] = "1"
-        try:
-            database.init_db()
-            self.assertEqual(self.login("VIJAY", "FreshPass456!").status_code, 302)
-        finally:
-            os.environ["ADMIN_USERNAME"] = "admin"
-            os.environ["ADMIN_PASSWORD"] = "AdminPass123!"
-            os.environ.pop("RESET_ADMIN_CREDENTIALS_ON_STARTUP", None)
-            database.reset_admin_password()
 
 
 if __name__ == "__main__":

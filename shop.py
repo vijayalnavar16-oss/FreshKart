@@ -18,7 +18,7 @@ bp = Blueprint("shop", __name__)
 
 IST = ZoneInfo("Asia/Kolkata")  # the store's local time, not the server's UTC clock
 DELIVERY_DAYS = {2: "Wednesday", 6: "Sunday"}  # date.weekday(): Mon=0 ... Wed=2 ... Sun=6
-DELIVERY_CHARGE = 0.0
+DELIVERY_CHARGE = 30.0
 PAYMENT_METHODS = {"COD": "Cash on Delivery", "UPI": "Pay directly by UPI"}
 UPI_ID = os.environ.get("UPI_ID", "8296863406@ybl").strip()
 PHONE_RE = re.compile(r"\+91[6-9][0-9]{9}")
@@ -101,47 +101,19 @@ def parse_qty(value, minimum=1):
     return qty if minimum <= qty <= MAX_QTY else None
 
 
-def get_cart(db, user):
-    rows = db.execute(
-        "SELECT product_id, quantity FROM cart_items WHERE customer_id = ?",
-        (user["id"],),
-    ).fetchall()
-    cart = {str(row["product_id"]): row["quantity"] for row in rows}
-    legacy_cart = session.pop("cart", {})
-    if not cart and legacy_cart:
-        for key, quantity in legacy_cart.items():
-            try:
-                product_id = int(key)
-                quantity = int(quantity)
-            except (TypeError, ValueError):
-                continue
-            if product_id > 0 and 0 < quantity <= MAX_QTY:
-                db.execute(
-                    """INSERT INTO cart_items (customer_id, product_id, quantity)
-                       VALUES (?, ?, ?) ON CONFLICT(customer_id, product_id)
-                       DO UPDATE SET quantity = excluded.quantity""",
-                    (user["id"], product_id, quantity),
-                )
-                cart[str(product_id)] = quantity
-        db.commit()
-    return cart
+def get_cart():
+    return dict(session.get("cart", {}))
 
 
-def set_cart(db, user, cart):
-    db.execute("DELETE FROM cart_items WHERE customer_id = ?", (user["id"],))
-    for key, quantity in cart.items():
-        try:
-            product_id = int(key)
-            quantity = int(quantity)
-        except (TypeError, ValueError):
-            continue
-        if product_id > 0 and 0 < quantity <= MAX_QTY:
-            db.execute(
-                """INSERT INTO cart_items (customer_id, product_id, quantity)
-                   VALUES (?, ?, ?)""",
-                (user["id"], product_id, quantity),
-            )
-    db.commit()
+def set_cart(cart):
+    session["cart"] = {k: v for k, v in cart.items() if v > 0}
+
+
+def get_delivery_charge(db):
+    setting = db.execute(
+        "SELECT value FROM app_settings WHERE key = 'free_delivery'"
+    ).fetchone()
+    return 0.0 if setting is not None and setting["value"] == "1" else DELIVERY_CHARGE
 
 
 def load_cart_items(db, cart):
@@ -208,15 +180,14 @@ def add_to_cart(user, product_id):
     if qty is None:
         flash("Enter a valid quantity.")
         return redirect(url_for("shop.detail", product_id=product_id))
-    db = get_db()
-    cart = get_cart(db, user)
+    cart = get_cart()
     key = str(product_id)
     new_total = cart.get(key, 0) + qty
     if new_total > p["stock"]:
         flash(f"Only {p['stock']} available. You already have {cart.get(key, 0)} in your cart.")
         return redirect(url_for("shop.detail", product_id=product_id))
     cart[key] = new_total
-    set_cart(db, user, cart)
+    set_cart(cart)
     flash("Added to cart.")
     return redirect(url_for("shop.cart"))
 
@@ -225,20 +196,19 @@ def add_to_cart(user, product_id):
 @login_required("customer")
 def cart(user):
     db = get_db()
-    items, subtotal = load_cart_items(db, get_cart(db, user))
-    set_cart(db, user, {str(i["product"]["id"]): i["qty"] for i in items})
+    items, subtotal = load_cart_items(db, get_cart())
+    set_cart({str(i["product"]["id"]): i["qty"] for i in items})  # drop removed products
     address = db.execute("SELECT address FROM users WHERE id = ?", (user["id"],)).fetchone()["address"]
-    total = subtotal + (DELIVERY_CHARGE if items else 0.0)
-    return render_template("cart.html", items=items, subtotal=subtotal, total=total,
-                           dates=delivery_dates(),
+    charge = get_delivery_charge(db) if items else 0.0
+    return render_template("cart.html", items=items, subtotal=subtotal, charge=charge,
+                           total=subtotal + charge, dates=delivery_dates(),
                            methods=PAYMENT_METHODS, address=address)
 
 
 @bp.route("/cart/update/<int:product_id>", methods=["POST"])
 @login_required("customer")
 def update_cart(user, product_id):
-    db = get_db()
-    cart = get_cart(db, user)
+    cart = get_cart()
     key = str(product_id)
     if key not in cart:
         flash("That item is not in your cart.")
@@ -250,7 +220,7 @@ def update_cart(user, product_id):
     if qty == 0:
         cart.pop(key)
     else:
-        p = db.execute(
+        p = get_db().execute(
             "SELECT stock FROM products WHERE id = ? AND deleted = 0", (product_id,)).fetchone()
         if p is None:
             cart.pop(key)
@@ -259,7 +229,7 @@ def update_cart(user, product_id):
             return redirect(url_for("shop.cart"))
         else:
             cart[key] = qty
-    set_cart(db, user, cart)
+    set_cart(cart)
     flash("Cart updated.")
     return redirect(url_for("shop.cart"))
 
@@ -271,7 +241,7 @@ def checkout(user):
     phone = user["phone_number"] or ""
     delivery = request.form.get("delivery_date", "")
     payment = request.form.get("payment", "")
-    cart = get_cart(get_db(), user)
+    cart = get_cart()
 
     if not 5 <= len(address) <= 300:
         flash("Enter a delivery address (5 to 300 characters).")
@@ -293,7 +263,7 @@ def checkout(user):
 
     try:
         db.execute("BEGIN IMMEDIATE")  # lock the database while stock is checked and reduced
-        delivery_charge = DELIVERY_CHARGE
+        delivery_charge = get_delivery_charge(db)
         items, subtotal = load_cart_items(db, cart)
         if len(items) != len(cart):
             raise CheckoutError("Some items in your cart are no longer available.")
@@ -309,26 +279,15 @@ def checkout(user):
             """INSERT INTO orders
                (customer_id, total, delivery_charge, address, delivery_date, payment_method,
                 customer_phone, payment_status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             (user["id"], total, delivery_charge, address, delivery, payment, phone,
              "pending" if payment == "UPI" else "cash_on_delivery"),
         )
-        order_id = cur.fetchone()["id"]
+        order_id = cur.lastrowid
         for item in items:
             db.execute(
                 "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
                 (order_id, item["product"]["id"], item["qty"], item["product"]["price"]),
-            )
-        db.execute("DELETE FROM cart_items WHERE customer_id = ?", (user["id"],))
-        db.execute(
-            "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-            (user["id"], f"Order #{order_id} was placed."),
-        )
-        admins = db.execute("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").fetchall()
-        for admin in admins:
-            db.execute(
-                "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-                (admin["id"], f"New order #{order_id} was placed."),
             )
         db.commit()
     except CheckoutError as err:
@@ -339,6 +298,7 @@ def checkout(user):
         db.rollback()
         raise
 
+    session.pop("cart", None)
     if payment == "UPI":
         return redirect(url_for("shop.upi_checkout", order_id=order_id))
     return redirect(url_for("shop.customer_order", order_id=order_id))
@@ -380,15 +340,6 @@ def upi_payment_submitted(user, order_id):
              AND payment_status = 'pending' AND status = 'Pending'""",
         (order_id, user["id"]),
     )
-    if cur.rowcount:
-        admins = db.execute(
-            "SELECT id FROM users WHERE role = 'admin' AND is_active = 1"
-        ).fetchall()
-        for admin in admins:
-            db.execute(
-                "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-                (admin["id"], f"Payment for order #{order_id} was reported for verification."),
-            )
     db.commit()
     if cur.rowcount:
         flash("Payment reported. Your order will be confirmed after the store verifies the UPI payment.")

@@ -1,11 +1,12 @@
 """Admin user management: create customer and farmer accounts, search, activate or deactivate."""
 import re
+import sqlite3
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from werkzeug.security import generate_password_hash
 
 from auth import login_required
-from database import IntegrityError, get_db
+from database import get_db
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 USERNAME_RE = re.compile(r"[A-Za-z0-9_]{3,30}")
@@ -25,8 +26,6 @@ def users(admin):
             toggle_account(db, admin)
         elif action == "update_phone":
             update_customer_phone(db)
-        elif action == "reset_customer_password":
-            reset_customer_password(db)
         return redirect(url_for("admin.users"))
 
     q = request.args.get("q", "").strip()[:50]
@@ -39,12 +38,32 @@ def users(admin):
     return render_template("admin_users.html", users=rows, q=q)
 
 
-@bp.route("/orders")
+@bp.route("/orders", methods=["GET", "POST"])
 @login_required("admin")
 def orders(admin):
     db = get_db()
+    if request.method == "POST":
+        if request.form.get("action") == "set_free_delivery":
+            free_delivery = request.form.get("free_delivery")
+            if free_delivery not in ("0", "1"):
+                flash("Invalid delivery setting.")
+            else:
+                db.execute(
+                    """INSERT INTO app_settings (key, value) VALUES ('free_delivery', ?)
+                       ON CONFLICT(key) DO UPDATE SET value = excluded.value""",
+                    (free_delivery,),
+                )
+                db.commit()
+                flash("Free delivery enabled for new orders." if free_delivery == "1"
+                      else "Delivery charge restored for new orders.")
+        return redirect(url_for("admin.orders"))
+
+    setting = db.execute(
+        "SELECT value FROM app_settings WHERE key = 'free_delivery'"
+    ).fetchone()
+    free_delivery = setting is not None and setting["value"] == "1"
     rows = db.execute(
-        """SELECT o.id, o.total, o.address, o.delivery_date,
+        """SELECT o.id, o.total, o.delivery_charge, o.address, o.delivery_date,
                   o.payment_method, o.payment_status, o.status, o.stock_released, o.created_at,
                   u.username, u.full_name
            FROM orders o JOIN users u ON u.id = o.customer_id
@@ -62,7 +81,8 @@ def orders(admin):
         ).fetchall()
         for item in items:
             order_items[item["order_id"]].append(item)
-    return render_template("admin_orders.html", orders=rows, order_items=order_items)
+    return render_template("admin_orders.html", orders=rows, order_items=order_items,
+                           free_delivery=free_delivery)
 
 
 @bp.route("/orders/<int:order_id>/verify-upi", methods=["POST"])
@@ -77,14 +97,6 @@ def verify_upi_payment(admin, order_id):
              AND status = 'Pending' AND stock_released = 0""",
         (order_id,),
     )
-    if cur.rowcount:
-        customer = db.execute(
-            "SELECT customer_id FROM orders WHERE id = ?", (order_id,)
-        ).fetchone()
-        db.execute(
-            "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-            (customer["customer_id"], f"Order #{order_id} was confirmed."),
-        )
     db.commit()
     flash("UPI payment verified and order confirmed." if cur.rowcount
           else "Order cannot be confirmed; check its current payment and order status.")
@@ -118,13 +130,6 @@ def cancel_unpaid_upi_order(admin, order_id):
         """UPDATE orders SET payment_status = 'cancelled', status = 'Cancelled',
            stock_released = 1 WHERE id = ?""",
         (order_id,),
-    )
-    customer = db.execute(
-        "SELECT customer_id FROM orders WHERE id = ?", (order_id,)
-    ).fetchone()
-    db.execute(
-        "INSERT INTO notifications (user_id, message) VALUES (?, ?)",
-        (customer["customer_id"], f"Order #{order_id} was cancelled."),
     )
     db.commit()
     flash("Unpaid UPI order cancelled and reserved stock released.")
@@ -163,7 +168,7 @@ def create_account(db):
             (username, password_hash, role, full_name, address, phone_number or None),
         )
         db.commit()
-    except IntegrityError:
+    except sqlite3.IntegrityError:
         flash("That username already exists.")
         return
     flash(f"Created {role} account '{username}'.")
@@ -205,31 +210,7 @@ def update_customer_phone(db):
             "UPDATE users SET phone_number = ? WHERE id = ?", (phone_number, user_id)
         )
         db.commit()
-    except IntegrityError:
+    except sqlite3.IntegrityError:
         flash("That mobile number is already assigned to another account.")
         return
     flash("Customer mobile number updated.")
-
-
-def reset_customer_password(db):
-    try:
-        user_id = int(request.form.get("user_id", ""))
-    except ValueError:
-        flash("Invalid customer.")
-        return
-    password = request.form.get("password", "")
-    customer = db.execute(
-        "SELECT id FROM users WHERE id = ? AND role = 'customer'", (user_id,)
-    ).fetchone()
-    if customer is None:
-        flash("Customer not found.")
-        return
-    if len(password) < 8:
-        flash("Password must be at least 8 characters.")
-        return
-    db.execute(
-        "UPDATE users SET password_hash = ? WHERE id = ?",
-        (generate_password_hash(password), user_id),
-    )
-    db.commit()
-    flash("Customer password updated.")

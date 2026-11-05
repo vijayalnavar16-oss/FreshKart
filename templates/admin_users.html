@@ -74,16 +74,6 @@
               <input type="hidden" name="user_id" value="{{ u['id'] }}">
               <button class="btn small" type="submit">{{ 'Deactivate' if u['is_active'] else 'Activate' }}</button>
             </form>
-            {% if u['role'] == 'customer' %}
-            <form method="post" action="{{ url_for('admin.users') }}" class="stack"
-                  data-confirm="Reset this customer's password?">
-              <input type="hidden" name="action" value="reset_customer_password">
-              <input type="hidden" name="user_id" value="{{ u['id'] }}">
-              <input type="password" name="password" required minlength="8" autocomplete="new-password"
-                     aria-label="New password for {{ u['full_name'] }}" placeholder="New password">
-              <button class="btn small" type="submit">Reset password</button>
-            </form>
-            {% endif %}
           </td>
         </tr>
         {% else %}

@@ -1,12 +1,10 @@
 """Stage 3 tests: shopping, cart, delivery rules, checkout.
 Run: python -m unittest discover -s tests -v"""
 import os
-import json
 import sys
 import tempfile
 import unittest
 import uuid
-from unittest.mock import MagicMock, patch
 
 os.environ.setdefault("DATABASE_PATH", os.path.join(tempfile.mkdtemp(), "test3.db"))
 os.environ.setdefault("ADMIN_USERNAME", "admin")
@@ -85,61 +83,10 @@ class Stage3Tests(unittest.TestCase):
         self.assertIn(b"Tomato", body)
         self.assertNotIn(b"Ghost", body)
 
-    def test_kannada_marketplace_search_uses_database_products(self):
-        home = self.client.get("/home").data
-        self.assertIn("ತಾಜಾ ತರಕಾರಿಗಳನ್ನು ಆರ್ಡರ್ ಮಾಡಿ".encode(), home)
-        self.assertIn("ತರಕಾರಿಗಳನ್ನು ಹುಡುಕಿ".encode(), home)
-        self.assertIn(b"Tomato", home)
-
-        results = self.client.get("/shop?q=Tomato").data
-        self.assertIn(b"Tomato", results)
-        self.assertNotIn(b"Ghost", results)
-
     def test_detail_shows_farmer(self):
         r = self.client.get(f"/shop/{self.tomato}")
         self.assertEqual(r.status_code, 200)
         self.assertIn(b"Ravi Farmer", r.data)
-
-    def test_customer_can_ask_groq_about_current_catalog(self):
-        response_mock = MagicMock()
-        response_mock.__enter__.return_value.read.return_value = json.dumps({
-            "choices": [{"message": {"content": "Tomato is available for ₹40 per kg."}}]
-        }).encode()
-        with patch.dict(os.environ, {
-            "GROQ_API_KEY": "test-groq-secret",
-            "GROQ_API_BASE_URL": "https://api.groq.com/openai/v1",
-        }), patch("app.urlopen", return_value=response_mock) as urlopen:
-            response = self.client.post(
-                "/assistant", data={"question": "What is available under ₹50?"}
-            )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Tomato is available", response.data)
-        self.assertNotIn(b"test-groq-secret", response.data)
-        api_request = urlopen.call_args.args[0]
-        self.assertEqual(
-            api_request.full_url,
-            "https://api.groq.com/openai/v1/chat/completions",
-        )
-        self.assertEqual(api_request.get_header("Authorization"), "Bearer test-groq-secret")
-        payload = json.loads(api_request.data)
-        self.assertIn("Tomato", payload["messages"][1]["content"])
-        self.assertIn("What is available under", payload["messages"][1]["content"])
-
-    def test_shopping_assistant_reports_missing_groq_key(self):
-        with patch.dict(os.environ, {}, clear=True):
-            response = self.client.post(
-                "/assistant", data={"question": "What vegetables are available?"}
-            )
-        self.assertEqual(response.status_code, 302)
-        home = self.client.get("/home")
-        self.assertIn(b"Set GROQ_API_KEY in Render", home.data)
-
-    def test_shopping_assistant_is_customer_only(self):
-        self.assertEqual(
-            self.admin.post("/assistant", data={"question": "Hello"}).status_code,
-            403,
-        )
 
     def test_admin_cannot_use_shopping_pages(self):
         self.assertEqual(self.admin.get("/shop").status_code, 403)
@@ -153,22 +100,7 @@ class Stage3Tests(unittest.TestCase):
         self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "3"})
         self.assertIn(b"Tomato", self.client.get("/cart").data)
         self.client.post(f"/cart/update/{self.tomato}", data={"quantity": "0"})
-        self.assertIn("ನಿಮ್ಮ ಕಾರ್ಟ್ ಖಾಲಿಯಾಗಿದೆ.".encode(), self.client.get("/cart").data)
-
-    def test_cart_is_stored_in_database_across_sessions(self):
-        self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "3"})
-        self.client.post("/logout")
-
-        another_session = app.test_client()
-        another_session.post(
-            "/login", data={"username": self.customer, "password": PASSWORD}
-        )
-        self.assertIn(b"Tomato", another_session.get("/cart").data)
-        saved = self.db.execute(
-            "SELECT quantity FROM cart_items WHERE customer_id = ? AND product_id = ?",
-            (self.customer_id(), self.tomato),
-        ).fetchone()
-        self.assertEqual(saved["quantity"], 3)
+        self.assertIn(b"Your cart is empty", self.client.get("/cart").data)
 
     def test_checkout_rejects_non_delivery_day(self):
         self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "2"})
@@ -183,28 +115,7 @@ class Stage3Tests(unittest.TestCase):
         self.checkout()
         self.assertEqual(self.order_count(), before + 1)
         self.assertEqual(self.stock_of(self.tomato), 8)
-        self.assertIn("ನಿಮ್ಮ ಕಾರ್ಟ್ ಖಾಲಿಯಾಗಿದೆ.".encode(), self.client.get("/cart").data)
-        self.assertEqual(
-            self.db.execute(
-                "SELECT COUNT(*) FROM cart_items WHERE customer_id = ?",
-                (self.customer_id(),),
-            ).fetchone()[0],
-            0,
-        )
-
-    def test_order_and_admin_notifications_are_persisted(self):
-        self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "1"})
-        self.checkout()
-        self.assertIn(b"Order #", self.client.get("/notifications").data)
-        self.assertIn(b"New order #", self.admin.get("/notifications").data)
-        self.client.post("/notifications/read")
-        self.assertEqual(
-            self.db.execute(
-                "SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_at IS NULL",
-                (self.customer_id(),),
-            ).fetchone()[0],
-            0,
-        )
+        self.assertIn(b"Your cart is empty", self.client.get("/cart").data)
 
     def test_admin_can_view_order_customer_and_items(self):
         self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "2"})
@@ -228,29 +139,31 @@ class Stage3Tests(unittest.TestCase):
         self.assertEqual(self.client.get("/admin/orders").status_code, 403)
         self.assertEqual(app.test_client().get("/admin/orders").status_code, 302)
 
-    def test_delivery_is_always_free_for_new_orders(self):
-        self.db.execute(
-            """INSERT INTO app_settings (key, value) VALUES ('free_delivery', '0')
-               ON CONFLICT(key) DO UPDATE SET value = excluded.value"""
+    def test_admin_can_enable_free_delivery_for_new_orders(self):
+        response = self.admin.post(
+            "/admin/orders",
+            data={"action": "set_free_delivery", "free_delivery": "1"},
         )
-        self.db.commit()
+        self.assertEqual(response.status_code, 302)
         self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "2"})
         cart = self.client.get("/cart")
-        self.assertNotIn(b"Delivery charge", cart.data)
+        self.assertIn(b"Delivery charge", cart.data)
+        self.assertIn(b"Free", cart.data)
         self.checkout()
         order = self.db.execute(
-            "SELECT id, delivery_charge, total FROM orders WHERE customer_id = ? ORDER BY id DESC LIMIT 1",
+            "SELECT delivery_charge, total FROM orders WHERE customer_id = ? ORDER BY id DESC LIMIT 1",
             (self.customer_id(),),
         ).fetchone()
         self.assertEqual(order["delivery_charge"], 0)
         self.assertEqual(order["total"], 80)
-        admin_orders = self.admin.get("/admin/orders")
-        self.assertNotIn(b"Delivery charge", admin_orders.data)
-        self.assertNotIn(b"Restore", admin_orders.data)
-        self.assertNotIn(b"Enable free delivery", admin_orders.data)
+        self.assertIn(b"Free delivery is enabled", self.admin.get("/admin/orders").data)
 
-        customer_order = self.client.get(f"/orders/{order['id']}")
-        self.assertNotIn(b"Delivery charge", customer_order.data)
+    def test_non_admin_cannot_change_delivery_setting(self):
+        response = self.client.post(
+            "/admin/orders",
+            data={"action": "set_free_delivery", "free_delivery": "1"},
+        )
+        self.assertEqual(response.status_code, 403)
 
     def test_checkout_fails_cleanly_when_stock_changed(self):
         self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "5"})
@@ -334,11 +247,11 @@ class Stage3Tests(unittest.TestCase):
         )
         self.assertIn(b"UPI payment verified", response.data)
         receipt = self.client.get(f"/orders/{order['id']}")
-        self.assertIn("ಪಾವತಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ".encode(), receipt.data)
-        self.assertIn("ದೃಢೀಕರಿಸಲಾಗಿದೆ".encode(), receipt.data)
+        self.assertIn(b"Payment received", receipt.data)
+        self.assertIn(b"marked as ordered", receipt.data)
         self.assertIn(order["delivery_date"].encode(), receipt.data)
-        self.assertIn("ವಿತರಣಾ ಸಮಯ".encode(), receipt.data)
-        self.assertIn("ಅಂಗಡಿಯಿಂದ ದೃಢೀಕರಿಸಲಾಗುತ್ತದೆ".encode(), receipt.data)
+        self.assertIn(b"Delivery time", receipt.data)
+        self.assertIn(b"To be confirmed by the store", receipt.data)
         saved = self.db.execute(
             "SELECT payment_status, status FROM orders WHERE id = ?", (order["id"],)
         ).fetchone()
@@ -396,15 +309,15 @@ class Stage3Tests(unittest.TestCase):
         response = self.checkout()
         receipt = self.client.get(response.headers["Location"])
         self.assertEqual(receipt.status_code, 200)
-        self.assertIn("ಆರ್ಡರ್ ಮಾಡಿದ ವಸ್ತುಗಳು".encode(), receipt.data)
+        self.assertIn(b"Items ordered", receipt.data)
         self.assertIn(b"Tomato", receipt.data)
-        self.assertIn("ವಿತರಣಾ ಸಮಯ".encode(), receipt.data)
+        self.assertIn(b"Delivery time", receipt.data)
 
     def test_removed_product_is_dropped_from_cart(self):
         self.client.post(f"/cart/add/{self.tomato}", data={"quantity": "1"})
         self.db.execute("UPDATE products SET deleted = 1 WHERE id = ?", (self.tomato,))
         self.db.commit()
-        self.assertIn("ನಿಮ್ಮ ಕಾರ್ಟ್ ಖಾಲಿಯಾಗಿದೆ.".encode(), self.client.get("/cart").data)
+        self.assertIn(b"Your cart is empty", self.client.get("/cart").data)
 
     def test_adding_deleted_product_is_not_found(self):
         self.assertEqual(self.client.post(f"/cart/add/{self.ghost}", data={"quantity": "1"}).status_code, 404)

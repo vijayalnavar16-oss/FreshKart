@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-{% from "_macros.html" import photo %}
 <section class="card">
   <div class="head">
     <h1>{{ t('products') }}</h1>
@@ -10,29 +9,29 @@
     <table class="list">
       <thead>
         <tr>
-          <th>{{ t('photo') }}</th><th>{{ t('name_column') }}</th><th>{{ t('all_categories') }}</th><th>{{ t('price_column') }}</th><th>{{ t('stock_column') }}</th>
-          {% if user['role'] == 'admin' %}<th>{{ t('farmer') }}</th>{% endif %}
+          <th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th>
+          {% if user['role'] == 'admin' %}<th>Farmer</th>{% endif %}
           <th></th>
         </tr>
       </thead>
       <tbody>
         {% for p in products %}
         <tr>
-          <td>{% if p['image'] %}<img class="thumb" src="{{ photo(p['image']) }}" alt="{{ p['name'] }}">{% else %}—{% endif %}</td>
+          <td>{% if p['image'] %}<img class="thumb" src="{{ url_for('static', filename='uploads/' ~ p['image']) }}" alt="{{ p['name'] }}">{% else %}—{% endif %}</td>
           <td>{{ p['name'] }}</td>
-          <td>{{ category_label(p['category']) }}</td>
+          <td>{{ p['category'] }}</td>
           <td>₹{{ '%.2f'|format(p['price']) }} / {{ p['unit'] }}</td>
-          <td>{% if p['stock'] == 0 %}<span class="badge out">{{ t('out_of_stock') }}</span>{% else %}{{ p['stock'] }}{% endif %}</td>
+          <td>{% if p['stock'] == 0 %}<span class="badge out">Out of stock</span>{% else %}{{ p['stock'] }}{% endif %}</td>
           {% if user['role'] == 'admin' %}<td>{{ p['farmer_name'] }}</td>{% endif %}
           <td class="actions-cell">
-            <a class="btn small" href="{{ url_for('products.edit', product_id=p['id']) }}">{{ t('edit') }}</a>
-            <form method="post" action="{{ url_for('products.delete', product_id=p['id']) }}" data-confirm="{{ t('remove_vegetable_confirm') }}">
-              <button class="btn small danger" type="submit">{{ t('remove') }}</button>
+            <a class="btn small" href="{{ url_for('products.edit', product_id=p['id']) }}">Edit</a>
+            <form method="post" action="{{ url_for('products.delete', product_id=p['id']) }}" data-confirm="Remove this vegetable from the store?">
+              <button class="btn small danger" type="submit">Remove</button>
             </form>
           </td>
         </tr>
         {% else %}
-        <tr><td colspan="7" class="muted">{{ t('no_vegetables_yet') }}</td></tr>
+        <tr><td colspan="7" class="muted">No vegetables yet. Add the first one.</td></tr>
         {% endfor %}
       </tbody>
     </table>

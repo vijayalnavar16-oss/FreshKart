@@ -13,13 +13,5 @@ services:
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
-      - key: DATABASE_URL
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
-      - key: GROQ_API_BASE_URL
-        value: https://api.groq.com/openai/v1
-      - key: GROQ_MODEL
-        value: llama-3.3-70b-versatile
       - key: UPI_ID
         value: 8296863406@ybl

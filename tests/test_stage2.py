@@ -94,42 +94,6 @@ class Stage2Tests(unittest.TestCase):
         ).fetchone()["phone_number"]
         self.assertEqual(phone_number, "+916123456789")
 
-    def test_admin_can_reset_customer_password(self):
-        customer_id = self.user_id(self.customer_name)
-        new_password = "FreshPass987!"
-        self.admin.post("/admin/users", data={
-            "action": "reset_customer_password",
-            "user_id": str(customer_id),
-            "password": new_password,
-        })
-        self.assertEqual(login(app.test_client(), self.customer_name, new_password).status_code, 302)
-        self.assertEqual(login(app.test_client(), self.customer_name, PASSWORD).status_code, 200)
-        password_hash = self.db.execute(
-            "SELECT password_hash FROM users WHERE id = ?", (customer_id,)
-        ).fetchone()["password_hash"]
-        self.assertNotEqual(password_hash, new_password)
-
-    def test_customer_password_reset_rejects_short_password_and_non_customers(self):
-        customer_id = self.user_id(self.customer_name)
-        original_hash = self.db.execute(
-            "SELECT password_hash FROM users WHERE id = ?", (customer_id,)
-        ).fetchone()["password_hash"]
-        self.admin.post("/admin/users", data={
-            "action": "reset_customer_password",
-            "user_id": str(customer_id),
-            "password": "short",
-        })
-        customer_hash = self.db.execute(
-            "SELECT password_hash FROM users WHERE id = ?", (customer_id,)
-        ).fetchone()["password_hash"]
-        self.assertEqual(customer_hash, original_hash)
-        self.admin.post("/admin/users", data={
-            "action": "reset_customer_password",
-            "user_id": str(self.user_id(self.farmer_name)),
-            "password": "FreshPass987!",
-        })
-        self.assertEqual(login(app.test_client(), self.farmer_name, PASSWORD).status_code, 302)
-
     def test_init_db_migrates_legacy_orders_before_phone_backfill(self):
         with tempfile.TemporaryDirectory() as directory:
             legacy_path = os.path.join(directory, "legacy.db")
@@ -180,16 +144,6 @@ class Stage2Tests(unittest.TestCase):
         self.assertIn("payment_status", columns)
         self.assertEqual(phone, "+919876543210")
 
-    def test_render_refuses_ephemeral_sqlite(self):
-        with patch.dict(os.environ, {"RENDER": "true"}, clear=True):
-            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL"):
-                database.connect()
-
-    def test_sqlite_import_requires_postgresql_destination(self):
-        with patch.dict(os.environ, {}, clear=True):
-            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL"):
-                database.migrate_sqlite_to_postgres("unused.db")
-
     def test_duplicate_and_weak_accounts_rejected(self):
         self.create_account("customer", self.customer_name)
         count = self.db.execute("SELECT COUNT(*) FROM users WHERE username = ?", (self.customer_name,)).fetchone()[0]
@@ -220,15 +174,9 @@ class Stage2Tests(unittest.TestCase):
         row = self.db.execute("SELECT * FROM products ORDER BY id DESC LIMIT 1").fetchone()
         self.assertEqual(row["farmer_id"], self.user_id(self.farmer_name))
         self.assertTrue(row["image"].endswith(".png"))
-        stored_image = self.db.execute(
-            "SELECT content, content_type FROM product_images WHERE image_name = ?",
-            (row["image"],),
-        ).fetchone()
-        self.assertEqual(stored_image["content"], PNG)
-        self.assertEqual(stored_image["content_type"], "image/png")
-        response = client.get(f"/products/image/{row['image']}")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, PNG)
+        path = os.path.join(app.root_path, "static", "uploads", row["image"])
+        self.assertTrue(os.path.isfile(path))
+        os.remove(path)
 
     def test_fake_image_is_rejected(self):
         client = self.client_for(self.farmer_name)

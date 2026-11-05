@@ -6,22 +6,14 @@
   <title>FreshKart – Raitha Market</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="{{ 'admin-app' if user and user['role'] == 'admin' else 'market-app' if user else 'guest-app' }}">
+<body class="{{ 'admin-app' if user and user['role'] == 'admin' else '' }}">
   <header class="top">
-    <div class="top-main">
-      <a class="brand" href="{{ url_for('index') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt=""> <span>FreshKart<small>{{ t('market') }}</small></span></a>
-      {% if user and user['role'] == 'customer' %}
-      <form class="header-search" method="get" action="{{ url_for('shop.listing') }}" role="search">
-        <input name="q" value="{{ request.args.get('q', '') }}" placeholder="{{ t('search_vegetables') }}" maxlength="60" aria-label="{{ t('search_vegetables') }}">
-        <button type="submit" aria-label="{{ t('search') }}">⌕</button>
-      </form>
-      {% endif %}
-      <nav class="lang" aria-label="Language">
-        {% for code, label in LANGS.items() %}
-          <a href="{{ url_for('set_lang', code=code) }}" class="{{ 'on' if code == lang }}">{{ label }}</a>
-        {% endfor %}
-      </nav>
-    </div>
+    <a class="brand" href="{{ url_for('index') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt=""> FreshKart <small>{{ t('market') }}</small></a>
+    <nav class="lang">
+      {% for code, label in LANGS.items() %}
+        <a href="{{ url_for('set_lang', code=code) }}" class="{{ 'on' if code == lang }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
   </header>
 
   <main>
@@ -34,17 +26,16 @@
   {% if user %}
   <nav class="bottom" aria-label="Main">
     <a href="{{ url_for('home') }}">🏠<span>{{ t('home') }}</span></a>
-    <a href="{{ url_for('notifications') }}">🔔<span>{{ 'ಅಧಿಸೂಚನೆ' if lang == 'kn' else 'Notifications' }}{% if notification_count %} ({{ notification_count }}){% endif %}</span></a>
     {% if user['role'] == 'customer' %}
       <a href="{{ url_for('shop.listing') }}">🥬<span>{{ t('products') }}</span></a>
       <a href="{{ url_for('shop.cart') }}">🛒<span>{{ t('cart') }} ({{ cart_count }})</span></a>
-      <a href="{{ url_for('shop.customer_orders') }}">📦<span>{{ 'ನನ್ನ ಆರ್ಡರ್‌ಗಳು' if lang == 'kn' else 'My orders' }}</span></a>
+      <a href="{{ url_for('shop.customer_orders') }}">📦<span>My orders</span></a>
     {% endif %}
     {% if user['role'] in ['admin', 'farmer'] %}
       <a href="{{ url_for('products.manage') }}">🌾<span>{{ t('products') }}</span></a>
     {% endif %}
     {% if user['role'] == 'admin' %}
-      <a href="{{ url_for('admin.orders') }}">📦<span>{{ t('orders') }}</span></a>
+      <a href="{{ url_for('admin.orders') }}">📦<span>Orders</span></a>
       <a href="{{ url_for('admin.users') }}">👥<span>{{ t('users') }}</span></a>
     {% endif %}
     <form method="post" action="{{ url_for('logout') }}" data-confirm="{{ t('confirm_logout') }}">

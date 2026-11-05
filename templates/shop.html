@@ -4,19 +4,19 @@
 <section class="card">
   <h1>{{ t('products') }}</h1>
   <form method="get" action="{{ url_for('shop.listing') }}" class="search">
-    <input name="q" value="{{ q }}" placeholder="{{ t('search_vegetables') }}" maxlength="60">
+    <input name="q" value="{{ q }}" placeholder="Search vegetables" maxlength="60">
     <select name="category">
-      <option value="">{{ t('all_categories') }}</option>
+      <option value="">All categories</option>
       {% for c in categories %}
-        <option value="{{ c }}" {{ 'selected' if c == cat }}>{{ category_label(c) }}</option>
+        <option value="{{ c }}" {{ 'selected' if c == cat }}>{{ c }}</option>
       {% endfor %}
     </select>
-    <button class="btn" type="submit">{{ t('search') }}</button>
+    <button class="btn" type="submit">Search</button>
   </form>
   <div class="tiles">
-    <a class="tile {{ 'on' if not cat }}" href="{{ url_for('shop.listing') }}">{{ t('all') }}</a>
+    <a class="tile {{ 'on' if not cat }}" href="{{ url_for('shop.listing') }}">All</a>
     {% for c in categories %}
-      <a class="tile {{ 'on' if c == cat }}" href="{{ url_for('shop.listing', category=c) }}">{{ category_label(c) }}</a>
+      <a class="tile {{ 'on' if c == cat }}" href="{{ url_for('shop.listing', category=c) }}">{{ c }}</a>
     {% endfor %}
   </div>
 </section>
@@ -28,20 +28,20 @@
       <img src="{{ photo(p['image']) }}" alt="{{ p['name'] }}">
       <h3>{{ p['name'] }}</h3>
     </a>
-    <p class="muted">{{ category_label(p['category']) }} · {{ p['farmer_name'] }}</p>
+    <p class="muted">{{ p['category'] }} · {{ p['farmer_name'] }}</p>
     <p class="price">₹{{ '%.2f'|format(p['price']) }} / {{ p['unit'] }}</p>
     {% if p['stock'] > 0 %}
-      <p class="muted">{{ p['stock'] }} {{ p['unit'] }} {{ t('available') }}</p>
+      <p class="muted">{{ p['stock'] }} {{ p['unit'] }} available</p>
     {% else %}
-      <p><span class="badge out">{{ t('out_of_stock') }}</span></p>
+      <p><span class="badge out">Out of stock</span></p>
     {% endif %}
     <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p['id']) }}">
       <input type="hidden" name="quantity" value="1">
-      <button class="btn" type="submit" {{ 'disabled' if p['stock'] == 0 }}>{{ t('add_to_cart') }}</button>
+      <button class="btn" type="submit" {{ 'disabled' if p['stock'] == 0 }}>Add to cart</button>
     </form>
   </article>
   {% else %}
-  <p class="muted">{{ t('no_vegetables') }}</p>
+  <p class="muted">No vegetables found.</p>
   {% endfor %}
 </section>
 {% endblock %}
