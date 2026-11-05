@@ -72,6 +72,14 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 }
 
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'androidx.lifecycle') {
+            details.useVersion '2.9.4'
+        }
+    }
+}
+
 apply from: 'capacitor.build.gradle'
 
 try {
