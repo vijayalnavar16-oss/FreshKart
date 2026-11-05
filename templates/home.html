@@ -70,21 +70,69 @@
   <h1>{{ t('welcome') }}, {{ user['full_name'] }} 🌿</h1>
   <p class="muted">{{ t('role') }}: {{ user['role'] }}</p>
 </section>
-  <section class="stats">
-    <div class="stat"><span>🥕 My vegetables</span><strong>{{ stats.vegetables }}</strong></div>
-    <div class="stat"><span>⚠️ Low stock (5 or less)</span><strong>{{ stats.low_stock }}</strong></div>
+<section class="stats farmer-stats">
+  <div class="stat"><span>🥕 {{ t('my_vegetables') }}</span><strong>{{ stats.vegetables }}</strong></div>
+  <div class="stat"><span>⚠️ {{ t('low_stock') }}</span><strong>{{ stats.low_stock }}</strong></div>
   </section>
   <section class="card actions">
-    <a class="btn" href="{{ url_for('products.manage') }}">Manage my vegetables</a>
-    <a class="btn" href="{{ url_for('products.new') }}">+ Add vegetable</a>
+  <a class="btn" href="{{ url_for('products.manage') }}">{{ t('manage_vegetables') }}</a>
+  <a class="btn" href="{{ url_for('products.new') }}">+ {{ t('add_vegetable') }}</a>
   </section>
 {% else %}
-  <section class="card">
-    <h1>{{ t('welcome') }}, {{ user['full_name'] }} 🌿</h1>
-    <p class="muted">{{ t('role') }}: {{ user['role'] }}</p>
+{% from "_macros.html" import photo %}
+<section class="shopping-hero">
+  <div class="shopping-hero-copy">
+    <p class="shopping-eyebrow">{{ t('fresh_today') }}</p>
+    <h1>{{ t('shop_fresh') }} 🌿</h1>
+    <p>{{ t('farm_to_home') }}</p>
+    <form class="hero-search" method="get" action="{{ url_for('shop.listing') }}" role="search">
+      <input name="q" placeholder="{{ t('search_vegetables') }}" maxlength="60" aria-label="{{ t('search_vegetables') }}">
+      <button class="btn" type="submit">{{ t('search') }}</button>
+    </form>
+  </div>
+  <div class="shopping-hero-art" aria-hidden="true">🥬<span>🥕</span><span>🍅</span></div>
+</section>
+<section class="market-section-heading">
+  <div><p class="shopping-eyebrow">{{ t('fresh_today') }}</p><h2>{{ t('featured_vegetables') }}</h2></div>
+</section>
+<section class="product-grid">
+    {% for p in products %}
+    <article class="product card">
+      <a href="{{ url_for('shop.detail', product_id=p['id']) }}">
+        <img src="{{ photo(p['image']) }}" alt="{{ p['name'] }}">
+        <h3>{{ p['name'] }}</h3>
+      </a>
+      <p class="muted">{{ category_label(p['category']) }} · {{ p['farmer_name'] }}</p>
+      <p class="price">₹{{ '%.2f'|format(p['price']) }} / {{ p['unit'] }}</p>
+      {% if p['stock'] > 0 %}
+        <p class="muted">{{ p['stock'] }} {{ p['unit'] }} {{ t('available') }}</p>
+      {% else %}
+        <p><span class="badge out">{{ t('out_of_stock') }}</span></p>
+      {% endif %}
+      <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p['id']) }}">
+        <input type="hidden" name="quantity" value="1">
+        <button class="btn" type="submit" {{ 'disabled' if p['stock'] == 0 }}>{{ t('add_to_cart') }}</button>
+      </form>
+    </article>
+    {% else %}
+    <p class="muted">{{ t('no_vegetables') }}</p>
+    {% endfor %}
   </section>
-  <section class="card">
-    <a class="btn" href="{{ url_for('shop.listing') }}">Start shopping</a>
+  <section class="card assistant-card">
+    <h2>{{ t('shopping_assistant') }}</h2>
+    <p class="muted">{{ t('assistant_description') }}</p>
+    <form method="post" action="{{ url_for('shopping_assistant') }}" class="grid-form">
+      <label for="assistant-question">{{ t('your_question') }}</label>
+      <textarea id="assistant-question" name="question" rows="3" maxlength="500"
+                placeholder="{{ t('assistant_placeholder') }}" required></textarea>
+      <button class="btn" type="submit">{{ t('ask_assistant') }}</button>
+    </form>
+    {% if assistant_answer %}
+    <div class="assistant-answer" role="status">
+      <strong>{{ t('shopping_assistant') }}</strong>
+      <p>{{ assistant_answer }}</p>
+    </div>
+    {% endif %}
   </section>
 {% endif %}
 {% endblock %}

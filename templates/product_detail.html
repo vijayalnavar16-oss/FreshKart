@@ -4,22 +4,22 @@
 <section class="card detail">
   <img class="detail-photo" src="{{ photo(p['image']) }}" alt="{{ p['name'] }}">
   <div>
-    <p><a href="{{ url_for('shop.listing') }}">← Back to vegetables</a></p>
+    <p><a href="{{ url_for('shop.listing') }}">← {{ t('back_to_vegetables') }}</a></p>
     <h1>{{ p['name'] }}</h1>
-    <p class="muted">{{ p['category'] }}</p>
+    <p class="muted">{{ category_label(p['category']) }}</p>
     <p class="price">₹{{ '%.2f'|format(p['price']) }} / {{ p['unit'] }}</p>
     <p>{{ p['description'] }}</p>
-    <p><strong>Available:</strong> {{ p['stock'] }} {{ p['unit'] }}</p>
-    <p><strong>Farmer:</strong> {{ p['farmer_name'] }}{% if p['farmer_address'] %}, {{ p['farmer_address'] }}{% endif %}</p>
+    <p><strong>{{ t('available') }}:</strong> {{ p['stock'] }} {{ p['unit'] }}</p>
+    <p><strong>{{ t('farmer') }}:</strong> {{ p['farmer_name'] }}{% if p['farmer_address'] %}, {{ p['farmer_address'] }}{% endif %}</p>
     {% if p['stock'] > 0 %}
     <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p['id']) }}" class="qty-form">
-      <label>Quantity ({{ p['unit'] }})
+      <label>{{ t('quantity') }} ({{ p['unit'] }})
         <input type="number" name="quantity" value="1" min="1" max="{{ p['stock'] }}" required>
       </label>
-      <button class="btn" type="submit">Add to cart</button>
+      <button class="btn" type="submit">{{ t('add_to_cart') }}</button>
     </form>
     {% else %}
-      <p><span class="badge out">Out of stock</span></p>
+      <p><span class="badge out">{{ t('out_of_stock') }}</span></p>
     {% endif %}
   </div>
 </section>

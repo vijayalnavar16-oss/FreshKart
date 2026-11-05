@@ -1,51 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
+{% from "_macros.html" import photo %}
 {% set v = form or product %}
 <section class="card">
-  <h1>{{ 'Edit vegetable' if product else 'Add vegetable' }}</h1>
+  <h1>{{ t('edit_vegetable') if product else t('add_vegetable') }}</h1>
   <form method="post" enctype="multipart/form-data" class="grid-form">
-    <label>Name
+    <label>{{ t('name') }}
       <input name="name" required maxlength="80" value="{{ v['name'] if v else '' }}">
     </label>
-    <label>Category
+    <label>{{ t('all_categories') }}
       <select name="category" required>
         {% for c in categories %}
-          <option value="{{ c }}" {{ 'selected' if v and v['category'] == c }}>{{ c }}</option>
+          <option value="{{ c }}" {{ 'selected' if v and v['category'] == c }}>{{ category_label(c) }}</option>
         {% endfor %}
       </select>
     </label>
     {% if farmers and not product %}
-    <label>Farmer
+    <label>{{ t('farmer') }}
       <select name="farmer_id" required>
-        <option value="">Choose a farmer</option>
+        <option value="">{{ t('choose_farmer') }}</option>
         {% for f in farmers %}
           <option value="{{ f['id'] }}" {{ 'selected' if form and form.get('farmer_id') == f['id']|string }}>{{ f['full_name'] }}</option>
         {% endfor %}
       </select>
     </label>
     {% endif %}
-    <label>Unit (for example kg, bunch, piece)
+    <label>{{ t('unit_example') }}
       <input name="unit" required maxlength="20" value="{{ v['unit'] if v else '' }}">
     </label>
-    <label>Price (₹)
+    <label>{{ t('price') }} (₹)
       <input type="number" name="price" required min="0.01" max="100000" step="0.01" value="{{ v['price'] if v else '' }}">
     </label>
-    <label>Stock available
+    <label>{{ t('stock_available') }}
       <input type="number" name="stock" required min="0" max="100000" step="1" value="{{ v['stock'] if v else '0' }}">
     </label>
-    <label>Description
+    <label>{{ t('description') }}
       <textarea name="description" rows="3" maxlength="500">{{ v['description'] if v else '' }}</textarea>
     </label>
-    <label>Photo (JPG, PNG or WebP, max 2 MB)
+    <label>{{ t('photo_requirements') }}
       <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
       {% if product and product['image'] %}
-        <img class="current-img" src="{{ url_for('static', filename='uploads/' ~ product['image']) }}" alt="Current photo">
-        <span class="muted">Upload a new photo to replace it.</span>
+        <img class="current-img" src="{{ photo(product['image']) }}" alt="{{ t('current_photo') }}">
+        <span class="muted">{{ t('replace_photo_hint') }}</span>
       {% endif %}
     </label>
     <div class="actions-cell">
-      <button class="btn" type="submit">Save</button>
-      <a class="btn small" href="{{ url_for('products.manage') }}">Cancel</a>
+      <button class="btn" type="submit">{{ t('save') }}</button>
+      <a class="btn small" href="{{ url_for('products.manage') }}">{{ t('cancel') }}</a>
     </div>
   </form>
 </section>

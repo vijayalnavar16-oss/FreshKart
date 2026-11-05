@@ -1,9 +1,13 @@
 """Vegetable management. Admins manage all products; farmers manage only their own."""
 import math
+import mimetypes
 import os
 import uuid
 
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint, Response, abort, current_app, flash, redirect, render_template,
+    request, send_from_directory, url_for,
+)
 
 from auth import login_required
 from database import get_db
@@ -16,7 +20,9 @@ IMAGE_TYPES = {"jpg": "jpg", "jpeg": "jpg", "png": "png", "webp": "webp"}
 
 
 def upload_dir():
-    path = os.path.join(current_app.root_path, "static", "uploads")
+    path = current_app.config.get("UPLOAD_FOLDER") or os.path.join(
+        current_app.root_path, "static", "uploads"
+    )
     os.makedirs(path, exist_ok=True)
     return path
 
@@ -43,16 +49,36 @@ def save_image():
     if not valid:
         raise ValueError("Photo must be a real JPG, PNG or WebP image.")
     name = f"{uuid.uuid4().hex}.{kind}"
-    with open(os.path.join(upload_dir(), name), "wb") as out:
-        out.write(data)
-    return name
+    content_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
+    return name, data, content_type
 
 
-def remove_image(name):
+def remove_image(db, name):
     if name and os.path.basename(name) == name:
+        db.execute("DELETE FROM product_images WHERE image_name = ?", (name,))
         path = os.path.join(upload_dir(), name)
         if os.path.isfile(path):
             os.remove(path)
+
+
+@bp.route("/image/<image_name>")
+def image(image_name):
+    if os.path.basename(image_name) != image_name:
+        abort(404)
+    row = get_db().execute(
+        "SELECT content, content_type FROM product_images WHERE image_name = ?",
+        (image_name,),
+    ).fetchone()
+    if row is not None:
+        return Response(
+            row["content"],
+            mimetype=row["content_type"],
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+    path = os.path.join(upload_dir(), image_name)
+    if not os.path.isfile(path):
+        abort(404)
+    return send_from_directory(upload_dir(), image_name)
 
 
 def read_form():
@@ -132,7 +158,8 @@ def new(user):
         try:
             data = read_form()
             farmer_id = chosen_farmer(db, user)
-            image = save_image() if has_upload() else ""
+            image_data = save_image() if has_upload() else None
+            image = image_data[0] if image_data else ""
         except ValueError as err:
             flash(str(err))
             return render_template("product_form.html", product=None, form=request.form,
@@ -143,6 +170,12 @@ def new(user):
             (farmer_id, data["name"], data["category"], data["price"], data["unit"],
              data["stock"], data["description"], image),
         )
+        if image_data:
+            db.execute(
+                """INSERT INTO product_images (image_name, content, content_type)
+                   VALUES (?, ?, ?)""",
+                image_data,
+            )
         db.commit()
         flash("Vegetable added.")
         return redirect(url_for("products.manage"))
@@ -158,7 +191,8 @@ def edit(user, product_id):
     if request.method == "POST":
         try:
             data = read_form()
-            image = save_image() if has_upload() else None
+            image_data = save_image() if has_upload() else None
+            image = image_data[0] if image_data else None
         except ValueError as err:
             flash(str(err))
             return render_template("product_form.html", product=product, form=request.form,
@@ -169,9 +203,16 @@ def edit(user, product_id):
             (data["name"], data["category"], data["price"], data["unit"], data["stock"],
              data["description"], image or product["image"], product_id),
         )
+        if image_data:
+            db.execute(
+                """INSERT INTO product_images (image_name, content, content_type)
+                   VALUES (?, ?, ?)""",
+                image_data,
+            )
         db.commit()
         if image:
-            remove_image(product["image"])  # delete the old photo only after the save succeeded
+            remove_image(db, product["image"])
+            db.commit()
         flash("Vegetable updated.")
         return redirect(url_for("products.manage"))
     return render_template("product_form.html", product=product, form=None,

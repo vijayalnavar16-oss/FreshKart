@@ -3,13 +3,15 @@
 <section class="card login">
   <div class="logo-big"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="FreshKart logo"></div>
   <h1>{{ t('welcome') }}</h1>
-  <p class="muted">Customer accounts are created by the store administrator.</p>
+  <p class="muted">{{ t('customer_accounts_note') }}</p>
   <form method="post" action="{{ url_for('login') }}" class="stack">
     <label>{{ t('username') }}
-      <input name="username" required maxlength="30" autocomplete="username">
+      <input name="username" required maxlength="30" autocomplete="username"
+             autocapitalize="none" autocorrect="off" spellcheck="false">
     </label>
     <label>{{ t('password') }}
-      <input type="password" name="password" required autocomplete="current-password">
+      <input type="password" name="password" required autocomplete="current-password"
+             autocapitalize="none">
     </label>
     <button class="btn" type="submit">{{ t('login') }}</button>
   </form>

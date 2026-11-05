@@ -14,25 +14,24 @@
       </div>
       <form method="post" action="{{ url_for('shop.update_cart', product_id=it.product['id']) }}" class="qty-inline">
         <input type="number" name="quantity" value="{{ it.qty }}" min="0" max="1000" aria-label="Quantity (0 removes)">
-        <button class="btn small" type="submit">Update</button>
+        <button class="btn small" type="submit">{{ t('update') }}</button>
       </form>
       <strong>₹{{ '%.2f'|format(it.line) }}</strong>
     </div>
     {% endfor %}
-    <p class="muted">Set quantity to 0 to remove an item.</p>
+    <p class="muted">{{ t('remove_item_hint') }}</p>
 
     <div class="summary">
-      <p>Subtotal <span>₹{{ '%.2f'|format(subtotal) }}</span></p>
-      <p>Delivery charge <span>{{ 'Free' if charge == 0 else '₹%.2f'|format(charge) }}</span></p>
-      <p class="total">Total <span>₹{{ '%.2f'|format(total) }}</span></p>
+      <p>{{ t('subtotal') }} <span>₹{{ '%.2f'|format(subtotal) }}</span></p>
+      <p class="total">{{ t('total') }} <span>₹{{ '%.2f'|format(total) }}</span></p>
     </div>
 
     <form method="post" action="{{ url_for('shop.checkout') }}" class="stack checkout">
-      <h2>Delivery</h2>
-      <label>Delivery address
+      <h2>{{ t('delivery') }}</h2>
+      <label>{{ t('delivery_address') }}
         <textarea name="address" required minlength="5" maxlength="300" rows="3">{{ address }}</textarea>
       </label>
-      <label>Delivery date (Wednesday or Sunday only)
+      <label>{{ t('delivery_date') }} ({{ t('delivery_date_note') }})
         <select name="delivery_date" required>
           {% for d, label in dates %}
             <option value="{{ d }}">{{ label }}, {{ d }}</option>
@@ -40,17 +39,17 @@
         </select>
       </label>
       <fieldset>
-        <legend>Payment</legend>
+        <legend>{{ t('payment') }}</legend>
         {% for code, label in methods.items() %}
           <label class="radio"><input type="radio" name="payment" value="{{ code }}" {{ 'checked' if loop.first }} required> {{ label }}</label>
         {% endfor %}
-        <p class="muted">UPI pays directly to the store's UPI ID. The order is confirmed after the store manually verifies payment.</p>
+        <p class="muted">{{ t('upi_payment_note') }}</p>
       </fieldset>
-      <button class="btn" id="checkout-submit" type="submit">Continue to checkout</button>
+      <button class="btn" id="checkout-submit" type="submit">{{ t('continue_checkout') }}</button>
     </form>
   {% else %}
-    <p class="muted">Your cart is empty.</p>
-    <a class="btn" href="{{ url_for('shop.listing') }}">Browse vegetables</a>
+    <p class="muted">{{ t('cart_empty') }}</p>
+    <a class="btn" href="{{ url_for('shop.listing') }}">{{ t('browse_vegetables') }}</a>
   {% endif %}
 </section>
 <script>
@@ -59,8 +58,8 @@
     const updateCheckoutLabel = () => {
       const selectedPayment = document.querySelector('input[name="payment"]:checked');
       checkoutSubmit.textContent = selectedPayment && selectedPayment.value === "COD"
-        ? "Place cash-on-delivery order"
-        : "Continue to UPI payment";
+        ? {{ t('place_cod_order')|tojson }}
+        : {{ t('continue_upi_payment')|tojson }};
     };
     document.querySelectorAll('input[name="payment"]').forEach((input) => {
       input.addEventListener("change", updateCheckoutLabel);

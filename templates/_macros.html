@@ -1,6 +1,6 @@
 {% macro photo(image) -%}
   {%- if image -%}
-    {{ url_for('static', filename='uploads/' ~ image) }}
+    {{ url_for('products.image', image_name=image) }}
   {%- else -%}
     {{ url_for('static', filename='images/placeholder.svg') }}
   {%- endif -%}
