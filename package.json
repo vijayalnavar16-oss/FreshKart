@@ -1,0 +1,19 @@
+{
+  "name": "freshkart-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android wrapper for the hosted FreshKart marketplace",
+  "scripts": {
+    "android:add": "cap add android",
+    "android:assets": "capacitor-assets generate --android --assetPath resources",
+    "android:sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^4.0.0",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

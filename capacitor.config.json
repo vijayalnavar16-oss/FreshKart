@@ -1,0 +1,9 @@
+{
+  "appId": "com.freshkart.app",
+  "appName": "FreshKart",
+  "webDir": "www",
+  "server": {
+    "url": "https://freshkart-j9d1.onrender.com",
+    "cleartext": false
+  }
+}
