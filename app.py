@@ -73,6 +73,11 @@ def logout():
 @app.route("/home")
 @login_required()
 def home(user):
+    # Customers should land directly on the live vegetable catalogue.
+    # Admin and farmer dashboards remain unchanged.
+    if user["role"] == "customer":
+        return redirect(url_for("shop.listing"))
+
     stats = {}
     recent_orders = []
     if user["role"] == "admin":
