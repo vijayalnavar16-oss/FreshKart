@@ -1,5 +1,6 @@
 package com.freshkart.app
 
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.CancellationException
 
