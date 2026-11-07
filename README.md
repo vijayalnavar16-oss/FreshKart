@@ -86,23 +86,36 @@ npm run android:sync
 
 Push the project, including `android/`, `resources/`, `capacitor.config.json`,
 `package.json`, and `package-lock.json`, to the GitHub repository. In GitHub, open
-**Actions** → **Build Android APK** → **Run workflow**. When the workflow
-completes, open its run, download the `FreshKart-Android-APK` artifact, and
-extract `app-debug.apk` to install it on your phone. The artifact is available
-for 14 days. The workflow also runs automatically when relevant Android files
-are pushed to the `main` or `master` branch.
+**Actions** → **Build Android APK** → **Run workflow**. No Supabase Actions
+secrets are required for the full-marketplace APK. When the workflow completes,
+open its run, download the `FreshKart-Android-APK` artifact, and extract
+`app-debug.apk` to install it on your phone. The artifact is available for
+14 days. The workflow also runs automatically when relevant Android files are
+pushed to the `main` or `master` branch.
 
 Alternatively, open the `android` folder in Android Studio and build a new APK.
 Updating project files does not change an APK that was already downloaded.
 
-## Native Android product manager
+## Android app
 
-The Android launcher now opens a native Kotlin/Jetpack Compose farmer product
-manager backed by Supabase Auth and PostgREST. The Flask website remains a
-separate app. The SQL below creates a Supabase `public.products` table whose
-schema differs from the Flask app's existing `products` table; use a separate
-Supabase project for this native sample unless you plan and test a schema/auth
-migration for both apps.
+The Android launcher opens the complete hosted FreshKart Flask marketplace
+inside a Capacitor WebView using the URL in `capacitor.config.json`.
+Customers, farmers, and administrators use the same website routes, login
+system, database, products, orders, and settings as the web version. This avoids
+maintaining a separate Android-only product database.
+
+The Android build does not require the optional native Supabase farmer-manager
+credentials. The older Kotlin/Jetpack Compose farmer product-manager source files
+remain in the repository as a separate sample, but they are not launched by the
+FreshKart APK.
+
+### Optional legacy native Android product manager
+
+The following Supabase setup applies only if you later decide to restore and use
+the separate native Kotlin farmer product manager. It is not required to build
+or run the current full-marketplace APK. Its `public.products` schema differs
+from the Flask app's existing `products` table; use a separate Supabase project
+for this optional sample unless you plan and test a schema/auth migration.
 
 1. In a new Supabase project, run [`supabase/create_products.sql`](./supabase/create_products.sql)
    in **SQL Editor**. It creates the products table, enables RLS, and grants
