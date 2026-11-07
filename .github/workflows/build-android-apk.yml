@@ -42,15 +42,9 @@ jobs:
         with:
           packages: platform-tools platforms;android-36
 
-      - name: Configure Supabase
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      - name: Configure Android SDK
         run: |
-          test -n "$SUPABASE_URL" || { echo "Missing GitHub Actions secret SUPABASE_URL"; exit 1; }
-          test -n "$SUPABASE_ANON_KEY" || { echo "Missing GitHub Actions secret SUPABASE_ANON_KEY"; exit 1; }
-          printf 'sdk.dir=%s\nSUPABASE_URL=%s\nSUPABASE_ANON_KEY=%s\n' \
-            "$ANDROID_HOME" "$SUPABASE_URL" "$SUPABASE_ANON_KEY" > android/local.properties
+          printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
 
       - name: Install Node dependencies
         run: npm ci
