@@ -110,10 +110,8 @@ def set_cart(cart):
 
 
 def get_delivery_charge(db):
-    setting = db.execute(
-        "SELECT value FROM app_settings WHERE key = 'free_delivery'"
-    ).fetchone()
-    return 0.0 if setting is not None and setting["value"] == "1" else DELIVERY_CHARGE
+    """FreshKart currently offers free delivery on every new order."""
+    return 0.0
 
 
 def load_cart_items(db, cart):
