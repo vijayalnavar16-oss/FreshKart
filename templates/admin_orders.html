@@ -2,17 +2,11 @@
 {% block content %}
 <section class="card">
   <h1>Customer orders</h1>
-  <form method="post" class="actions">
-    <input type="hidden" name="action" value="set_free_delivery">
-    <input type="hidden" name="free_delivery" value="{{ '0' if free_delivery else '1' }}">
-    {% if free_delivery %}
-      <p>Free delivery is enabled for new orders. Existing orders are unchanged.</p>
-      <button class="btn" type="submit">Restore ₹30 delivery charge</button>
-    {% else %}
-      <p>New orders currently have a ₹30 delivery charge.</p>
-      <button class="btn" type="submit">Enable free delivery</button>
-    {% endif %}
-  </form>
+  {% if free_delivery %}
+    <p>Free delivery is enabled for new orders. Existing orders are unchanged.</p>
+  {% else %}
+    <p>New orders currently have a ₹30 delivery charge.</p>
+  {% endif %}
   <div class="table-wrap">
     <table class="list">
       <thead>
