@@ -82,7 +82,7 @@ textarea { font:inherit; padding:12px; border:1px solid #d1d5db; border-radius:1
 }
 .admin-app { background:#f2f8f3; }
 .admin-app .bottom { background:#075c35; border:0; box-shadow:0 -4px 18px rgba(8,70,42,.16); }
-.admin-app .bottom a, .admin-app .bottom button { color:#fff; }
+.admin-app .bottom a, .admin-app .bottom button { color:#fff; font-size:1.45rem; }
 .admin-dashboard { display:grid; gap:20px; }
 .admin-hero { position:relative; overflow:hidden; min-height:210px; padding:28px; border-radius:22px; background:linear-gradient(120deg,#075c35,#0b7544); color:#fff; display:flex; align-items:center; justify-content:space-between; box-shadow:0 10px 24px rgba(5,92,53,.18); }
 .admin-hero h1 { margin:8px 0; font-size:clamp(1.7rem,4vw,2.4rem); }
