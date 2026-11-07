@@ -2,17 +2,12 @@
 {% block content %}
 <section class="card">
   <h1>Customer orders</h1>
-  {% if free_delivery %}
-    <p>Free delivery is enabled for new orders. Existing orders are unchanged.</p>
-  {% else %}
-    <p>New orders currently have a ₹30 delivery charge.</p>
-  {% endif %}
   <div class="table-wrap">
     <table class="list">
       <thead>
         <tr>
           <th>Order</th><th>Customer</th><th>Items</th><th>Delivery</th>
-          <th>Address</th><th>Payment</th><th>Payment status</th><th>Order status</th><th>Delivery charge</th><th>Total</th><th>Action</th>
+          <th>Address</th><th>Payment</th><th>Payment status</th><th>Order status</th><th>Total</th><th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -32,7 +27,6 @@
           <td>{{ order['payment_method'] }}</td>
           <td>{{ order['payment_status']|replace('_', ' ')|title }}</td>
           <td>{{ order['status'] }}</td>
-          <td>₹{{ '%.2f'|format(order['delivery_charge']) }}</td>
           <td>₹{{ '%.2f'|format(order['total']) }}</td>
           <td>
             {% if order['payment_method'] == 'UPI' and order['payment_status'] in ('pending', 'verification_requested') and order['status'] == 'Pending' %}
