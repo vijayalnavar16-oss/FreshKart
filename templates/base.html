@@ -9,7 +9,7 @@
 </head>
 <body class="{{ 'admin-app' if user and user['role'] == 'admin' else '' }}">
   <header class="site-header"><div class="header-inner">
-    <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">F</span><span class="brand-copy">FreshKart<small>ರೈತ ಮಾರುಕಟ್ಟೆ · FARM TO CUSTOMER</small></span></a>
+    <a class="brand" href="{{ url_for('index') }}"><img class="brand-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="FreshKart logo"><span class="brand-copy">FreshKart<small>ರೈತ ಮಾರುಕಟ್ಟೆ · FARM TO CUSTOMER</small></span></a>
     <nav class="desktop-nav" aria-label="Main navigation">{% if user %}
       <a href="{{ url_for('home') }}">Home</a>
       {% if user['role'] == 'customer' %}<a href="{{ url_for('shop.listing') }}">Shop vegetables</a><a href="{{ url_for('shop.customer_orders') }}">My orders</a>{% endif %}
