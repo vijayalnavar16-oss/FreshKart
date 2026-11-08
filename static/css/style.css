@@ -10,3 +10,30 @@ table{width:100%;border-collapse:collapse;background:white;border-radius:14px;ov
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 .brand-logo{width:46px;height:46px;object-fit:contain;display:block;flex:0 0 46px}
 @media(max-width:640px){.brand-logo{width:40px;height:40px;flex-basis:40px}}
+
+
+/* FreshKart motion polish: lightweight, responsive and accessible */
+@keyframes fk-rise-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fk-soft-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes fk-pop{0%{transform:scale(.94)}65%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes fk-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.welcome-banner,.admin-hero,.login-story,.login-card,.shop-heading{animation:fk-rise-in .65s cubic-bezier(.2,.7,.2,1) both}
+.banner-illustration,.admin-hero-icon{animation:fk-soft-float 4s ease-in-out 700ms infinite}
+.customer-promise>div,.shop-cta,.admin-stat,.stat,.admin-quick-links>a,.recent-order{animation:fk-rise-in .55s ease both}
+.customer-promise>div:nth-child(2),.admin-stat:nth-child(2),.admin-quick-links>a:nth-child(2){animation-delay:70ms}
+.customer-promise>div:nth-child(3),.admin-stat:nth-child(3),.admin-quick-links>a:nth-child(3){animation-delay:140ms}
+.admin-stat:nth-child(4){animation-delay:210ms}.admin-stat:nth-child(5){animation-delay:280ms}
+.product{animation:fk-rise-in .5s ease both}
+.product:nth-child(4n+2){animation-delay:60ms}.product:nth-child(4n+3){animation-delay:120ms}.product:nth-child(4n+4){animation-delay:180ms}
+.product{transition:transform .24s ease,box-shadow .24s ease,border-color .24s ease}
+.product:hover{transform:translateY(-6px);box-shadow:0 18px 38px rgba(25,66,43,.15);border-color:#c9dfcb}
+.product-image-wrap img{transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.product:hover .product-image-wrap img{transform:scale(1.055)}
+.btn,.cart-shortcut,.tile{transition:transform .18s ease,background-color .18s ease,box-shadow .18s ease}
+.btn:hover,.cart-shortcut:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(23,107,69,.16)}
+.add-btn:active{animation:fk-pop .24s ease}
+.admin-stat strong{animation:fk-rise-in .7s ease both}
+button:disabled{opacity:.65;cursor:wait}
+.product-image-wrap img:not([src]),.product-image-wrap img[src=""]{background:linear-gradient(100deg,#edf4e9 30%,#f8fbf5 50%,#edf4e9 70%);background-size:200% 100%;animation:fk-shimmer 1.5s linear infinite}
+@media(max-width:640px){.banner-illustration,.admin-hero-icon{animation:none}.product:nth-child(n){animation-delay:0ms}.product:hover{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.welcome-banner,.admin-hero,.login-story,.login-card,.shop-heading,.banner-illustration,.admin-hero-icon,.customer-promise>div,.shop-cta,.admin-stat,.stat,.admin-quick-links>a,.recent-order,.product,.admin-stat strong{animation:none!important}.product:hover,.btn:hover,.cart-shortcut:hover{transform:none!important}.product-image-wrap img{transition:none!important}}
