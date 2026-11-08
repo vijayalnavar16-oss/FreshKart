@@ -1,17 +1,8 @@
-{% extends "base.html" %}
-{% block content %}
-<section class="card login">
-  <div class="logo-big"><img src="{{ url_for('static', filename='images/logo.png') }}" alt="FreshKart logo"></div>
-  <h1>{{ t('welcome') }}</h1>
-  <p class="muted">Customer accounts are created by the store administrator.</p>
-  <form method="post" action="{{ url_for('login') }}" class="stack">
-    <label>{{ t('username') }}
-      <input name="username" required maxlength="30" autocomplete="username">
-    </label>
-    <label>{{ t('password') }}
-      <input type="password" name="password" required autocomplete="current-password">
-    </label>
-    <button class="btn" type="submit">{{ t('login') }}</button>
-  </form>
-</section>
-{% endblock %}
+{% extends "base.html" %}{% block content %}
+<div class="login-layout">
+  <section class="login-story"><span class="story-kicker">🌱 FROM OUR FARMS TO YOUR HOME</span><h1>Fresh from the soil.<br><em>Fair to the farmer.</em></h1><p>Shop seasonal vegetables directly from local farmers. Fresh produce, honest prices and a market that supports the people who grow your food.</p><div class="story-points"><span>✓ Direct from farmers</span><span>✓ Fresh seasonal produce</span><span>✓ Simple, trusted ordering</span></div><div class="produce-art" aria-hidden="true"><span>🥬</span><span>🍅</span><span>🥕</span><span>🥦</span><span>🌶️</span></div></section>
+  <section class="card login login-card"><div class="login-brand"><span class="brand-mark">F</span><div><strong>Welcome back</strong><small>Sign in to your FreshKart account</small></div></div>
+    <form method="post" action="{{ url_for('login') }}" class="stack"><label>{{ t('username') }}<input name="username" required maxlength="30" autocomplete="username" placeholder="Enter your username"></label><label>{{ t('password') }}<input type="password" name="password" required autocomplete="current-password" placeholder="Enter your password"></label><button class="btn" type="submit">{{ t('login') }} <span>→</span></button></form>
+    <p class="login-note">Need an account? Contact your FreshKart administrator.</p><div class="secure-note">🔒 Secure access for customers, farmers and administrators</div>
+  </section>
+</div>{% endblock %}
