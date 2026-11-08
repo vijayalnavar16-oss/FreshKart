@@ -37,3 +37,50 @@ button:disabled{opacity:.65;cursor:wait}
 .product-image-wrap img:not([src]),.product-image-wrap img[src=""]{background:linear-gradient(100deg,#edf4e9 30%,#f8fbf5 50%,#edf4e9 70%);background-size:200% 100%;animation:fk-shimmer 1.5s linear infinite}
 @media(max-width:640px){.banner-illustration,.admin-hero-icon{animation:none}.product:nth-child(n){animation-delay:0ms}.product:hover{transform:translateY(-2px)}}
 @media(prefers-reduced-motion:reduce){.welcome-banner,.admin-hero,.login-story,.login-card,.shop-heading,.banner-illustration,.admin-hero-icon,.customer-promise>div,.shop-cta,.admin-stat,.stat,.admin-quick-links>a,.recent-order,.product,.admin-stat strong{animation:none!important}.product:hover,.btn:hover,.cart-shortcut:hover{transform:none!important}.product-image-wrap img{transition:none!important}}
+
+
+/* FreshKart Raitha Market interface refinement */
+.site-header{box-shadow:0 5px 24px rgba(28,75,46,.045)}
+.header-inner{max-width:1240px}
+.page-shell{max-width:1240px}
+.brand-logo{border-radius:13px;background:#f0f7eb;padding:3px}
+.desktop-nav a{transition:background .2s ease,color .2s ease,transform .2s ease}
+.desktop-nav a:hover{transform:translateY(-1px)}
+.welcome-banner{position:relative;isolation:isolate;min-height:350px;background:radial-gradient(circle at 82% 22%,rgba(255,255,255,.8) 0 9%,transparent 9.5%),linear-gradient(115deg,#e5f3df 0%,#f1f6e7 56%,#fff0d5 100%);border:1px solid #e0ecd9;box-shadow:0 18px 45px rgba(33,82,47,.07)}
+.welcome-banner:before,.welcome-banner:after{content:"";position:absolute;z-index:-1;border-radius:50%;pointer-events:none}
+.welcome-banner:before{width:270px;height:270px;right:8%;top:42px;background:rgba(255,255,255,.42);box-shadow:0 0 0 24px rgba(255,255,255,.16),0 0 0 50px rgba(255,255,255,.1)}
+.welcome-banner:after{width:120px;height:120px;right:4%;bottom:-54px;background:rgba(111,166,88,.12)}
+.welcome-banner>div:first-child{position:relative;z-index:1}
+.welcome-banner h1{max-width:650px;font-size:clamp(34px,4.5vw,54px)}
+.welcome-banner .eyebrow{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #d4e7ce;background:#ffffffa8;border-radius:99px}
+.banner-illustration{position:relative;z-index:1;display:grid;place-items:center;width:210px;height:210px;margin-right:4%;border:1px solid #ffffffa8;border-radius:44% 56% 58% 42%;background:linear-gradient(145deg,#ffffffbd,#e4f0d8a8);font-size:118px;box-shadow:0 24px 50px rgba(54,91,48,.1)}
+.customer-promise{gap:16px;margin:24px 0}
+.customer-promise>div{min-height:88px;align-content:center;box-shadow:0 8px 24px rgba(25,66,43,.045);transition:transform .22s ease,box-shadow .22s ease}
+.customer-promise>div:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(25,66,43,.09)}
+.shop-cta{border-radius:20px;background:linear-gradient(105deg,#fff 0%,#f4f8ef 100%)}
+.btn{box-shadow:0 7px 17px rgba(23,107,69,.13)}
+.product{border-radius:18px;box-shadow:0 8px 24px rgba(25,66,43,.055)}
+.product-image-wrap{background:linear-gradient(145deg,#edf5e8,#f8f5e9)}
+.product-copy h3{letter-spacing:-.2px}
+.admin-hero{box-shadow:0 16px 36px rgba(16,75,51,.16);position:relative;overflow:hidden}
+.admin-hero:after{content:"";position:absolute;width:230px;height:230px;border:1px solid #ffffff26;border-radius:50%;right:7%;top:-105px;box-shadow:0 0 0 25px #ffffff0d,0 0 0 52px #ffffff0a}
+.admin-hero>div{position:relative;z-index:1}
+.admin-stat{transition:transform .2s ease,box-shadow .2s ease}
+a.admin-stat:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(25,66,43,.1)}
+.admin-quick-links>a{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.admin-quick-links>a:hover{transform:translateY(-3px);border-color:#b9d8bd;box-shadow:0 10px 22px rgba(25,66,43,.07)}
+.login-card{border:1px solid #e5eee2;box-shadow:0 22px 55px rgba(25,66,43,.1);border-radius:22px}
+@media(max-width:640px){
+ .welcome-banner{min-height:0;padding:27px 21px;display:block}
+ .welcome-banner:before{width:150px;height:150px;right:-24px;top:auto;bottom:8px}
+ .banner-illustration{width:104px;height:104px;margin:18px 2px 0 auto;font-size:61px;border-radius:38% 62% 54% 46%}
+ .welcome-banner h1{font-size:34px;max-width:100%}
+ .customer-promise{margin:14px 0;gap:8px}
+ .customer-promise>div{min-height:94px}
+ .shop-cta{padding:18px}
+ .admin-hero:after{right:-100px}
+}
+@media(prefers-reduced-motion:reduce){
+ .welcome-banner,.admin-hero,.login-story,.login-card,.shop-heading,.customer-promise>div,.shop-cta,.admin-stat,.stat,.admin-quick-links>a,.recent-order,.product{animation:none!important}
+ .banner-illustration,.admin-hero-icon{animation:none!important}
+}
