@@ -1,90 +1,13 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %}{% block content %}
 {% if user['role'] == 'admin' %}
 <div class="admin-dashboard">
-  <section class="admin-hero">
-    <div>
-      <p class="admin-eyebrow">FRESHKART · ADMIN</p>
-      <h1>Welcome, {{ user['full_name'] }} 🌿</h1>
-      <p>Here’s what’s happening in your market today.</p>
-      <a class="admin-hero-link" href="{{ url_for('admin.orders') }}">Review customer orders <span>→</span></a>
-    </div>
-    <div class="admin-hero-icon" aria-hidden="true">🌾</div>
-  </section>
-
-  <section class="admin-stats" aria-label="Market overview">
-    <a class="admin-stat" href="{{ url_for('admin.users') }}">
-      <span class="admin-stat-icon">👥</span><span class="admin-stat-label">Customers</span>
-      <strong>{{ stats.customers }}</strong>
-    </a>
-    <a class="admin-stat" href="{{ url_for('admin.users') }}">
-      <span class="admin-stat-icon">🧑‍🌾</span><span class="admin-stat-label">Farmers</span>
-      <strong>{{ stats.farmers }}</strong>
-    </a>
-    <a class="admin-stat" href="{{ url_for('products.manage') }}">
-      <span class="admin-stat-icon">🥕</span><span class="admin-stat-label">Vegetables</span>
-      <strong>{{ stats.vegetables }}</strong>
-    </a>
-    <a class="admin-stat" href="{{ url_for('admin.orders') }}">
-      <span class="admin-stat-icon">📦</span><span class="admin-stat-label">Orders</span>
-      <strong>{{ stats.orders }}</strong>
-    </a>
-    <div class="admin-stat">
-      <span class="admin-stat-icon">₹</span><span class="admin-stat-label">Sales</span>
-      <strong>₹{{ '%.2f'|format(stats.sales) }}</strong>
-    </div>
-  </section>
-
-  <section class="admin-section">
-    <div class="admin-section-heading">
-      <div><p class="admin-eyebrow">QUICK ACCESS</p><h2>Manage your market</h2></div>
-    </div>
-    <div class="admin-quick-links">
-      <a href="{{ url_for('admin.orders') }}"><span>📦</span><strong>Customer orders</strong><small>See customers, items and delivery details</small><b>→</b></a>
-      <a href="{{ url_for('products.manage') }}"><span>🥬</span><strong>Vegetables</strong><small>Review products and stock</small><b>→</b></a>
-      <a href="{{ url_for('admin.users') }}"><span>👥</span><strong>Customers & farmers</strong><small>Manage marketplace accounts</small><b>→</b></a>
-    </div>
-  </section>
-
-  <section class="admin-section recent-orders">
-    <div class="admin-section-heading">
-      <div><p class="admin-eyebrow">LATEST ACTIVITY</p><h2>Recent orders</h2></div>
-      <a href="{{ url_for('admin.orders') }}">View all <span>→</span></a>
-    </div>
-    {% for order in recent_orders %}
-    <a class="recent-order" href="{{ url_for('admin.orders') }}">
-      <span class="recent-order-icon">📦</span>
-      <span class="recent-order-info">
-        <strong>{{ order['customer_name'] }}</strong>
-        <small>Order #{{ order['id'] }}{% if order['item_summary'] %} · {{ order['item_summary'] }}{% endif %}</small>
-      </span>
-      <span class="recent-order-total">₹{{ '%.2f'|format(order['total']) }}<small>{{ order['status'] }} · {{ order['delivery_date'] }}</small></span>
-    </a>
-    {% else %}
-    <p class="admin-empty">No orders yet. New customer orders will appear here.</p>
-    {% endfor %}
-  </section>
+  <section class="admin-hero"><div><p class="admin-eyebrow">FRESHKART · ADMIN CONSOLE</p><h1>Good to see you, {{ user['full_name'] }} 👋</h1><p>Your local marketplace at a glance. Keep products fresh and orders moving.</p><a class="admin-hero-link" href="{{ url_for('admin.orders') }}">Review customer orders <span>→</span></a></div><div class="admin-hero-icon">🌾</div></section>
+  <section class="admin-stats" aria-label="Market overview"><a class="admin-stat" href="{{ url_for('admin.users') }}"><span class="admin-stat-icon">👥</span><span class="admin-stat-label">Customers</span><strong>{{ stats.customers }}</strong></a><a class="admin-stat" href="{{ url_for('admin.users') }}"><span class="admin-stat-icon">🧑‍🌾</span><span class="admin-stat-label">Farmers</span><strong>{{ stats.farmers }}</strong></a><a class="admin-stat" href="{{ url_for('products.manage') }}"><span class="admin-stat-icon">🥕</span><span class="admin-stat-label">Vegetables</span><strong>{{ stats.vegetables }}</strong></a><a class="admin-stat" href="{{ url_for('admin.orders') }}"><span class="admin-stat-icon">📦</span><span class="admin-stat-label">Orders</span><strong>{{ stats.orders }}</strong></a><div class="admin-stat"><span class="admin-stat-icon">₹</span><span class="admin-stat-label">Sales</span><strong>₹{{ '%.2f'|format(stats.sales) }}</strong></div></section>
+  <section class="admin-section"><div class="admin-section-heading"><div><p class="admin-eyebrow">QUICK ACCESS</p><h2>Manage your market</h2></div></div><div class="admin-quick-links"><a href="{{ url_for('admin.orders') }}"><span>📦</span><strong>Customer orders</strong><small>See items and delivery details</small><b>→</b></a><a href="{{ url_for('products.manage') }}"><span>🥬</span><strong>Vegetables</strong><small>Review products and stock</small><b>→</b></a><a href="{{ url_for('admin.users') }}"><span>👥</span><strong>Customers & farmers</strong><small>Manage marketplace accounts</small><b>→</b></a></div></section>
+  <section class="admin-section recent-orders"><div class="admin-section-heading"><div><p class="admin-eyebrow">LATEST ACTIVITY</p><h2>Recent orders</h2></div><a href="{{ url_for('admin.orders') }}">View all →</a></div>{% for order in recent_orders %}<a class="recent-order" href="{{ url_for('admin.orders') }}"><span class="recent-order-icon">📦</span><span class="recent-order-info"><strong>{{ order['customer_name'] }}</strong><small>Order #{{ order['id'] }}{% if order['item_summary'] %} · {{ order['item_summary'] }}{% endif %}</small></span><span class="recent-order-total">₹{{ '%.2f'|format(order['total']) }}<small>{{ order['status'] }} · {{ order['delivery_date'] }}</small></span></a>{% else %}<p class="admin-empty">No orders yet. New customer orders will appear here.</p>{% endfor %}</section>
 </div>
 {% elif user['role'] == 'farmer' %}
-<section class="card">
-  <h1>{{ t('welcome') }}, {{ user['full_name'] }} 🌿</h1>
-  <p class="muted">{{ t('role') }}: {{ user['role'] }}</p>
-</section>
-  <section class="stats">
-    <div class="stat"><span>🥕 My vegetables</span><strong>{{ stats.vegetables }}</strong></div>
-    <div class="stat"><span>⚠️ Low stock (5 or less)</span><strong>{{ stats.low_stock }}</strong></div>
-  </section>
-  <section class="card actions">
-    <a class="btn" href="{{ url_for('products.manage') }}">Manage my vegetables</a>
-    <a class="btn" href="{{ url_for('products.new') }}">+ Add vegetable</a>
-  </section>
+<section class="welcome-banner farmer-banner"><div><p class="eyebrow">YOUR FARM · YOUR MARKET</p><h1>{{ t('welcome') }}, {{ user['full_name'] }} 🌿</h1><p>Manage your harvest, update availability and bring fresh produce to nearby homes.</p><a class="btn" href="{{ url_for('products.new') }}">＋ Add a vegetable</a></div><div class="banner-illustration">🧑‍🌾</div></section><section class="stats"><div class="stat"><span>🥕 My vegetables</span><strong>{{ stats.vegetables }}</strong><small>Products in your store</small></div><div class="stat"><span>⚠️ Low stock (5 or less)</span><strong>{{ stats.low_stock }}</strong><small>Items to restock soon</small></div></section><section class="card actions"><a class="btn" href="{{ url_for('products.manage') }}">Manage my vegetables</a><a class="btn btn-light" href="{{ url_for('products.new') }}">＋ Add vegetable</a></section>
 {% else %}
-  <section class="card">
-    <h1>{{ t('welcome') }}, {{ user['full_name'] }} 🌿</h1>
-    <p class="muted">{{ t('role') }}: {{ user['role'] }}</p>
-  </section>
-  <section class="card">
-    <a class="btn" href="{{ url_for('shop.listing') }}">Start shopping</a>
-  </section>
-{% endif %}
-{% endblock %}
+<section class="welcome-banner customer-banner"><div><p class="eyebrow">ನಿಮ್ಮ ಸ್ಥಳೀಯ ರೈತರಿಂದ · DIRECT FROM LOCAL FARMERS</p><h1>Good food. Good farmers.<br><em>Good for everyone.</em></h1><p>Discover fresh seasonal vegetables grown with care and delivered straight from the farm to your home.</p><a class="btn" href="{{ url_for('shop.listing') }}">Explore fresh vegetables <span>→</span></a></div><div class="banner-illustration produce-basket">🧺</div></section><section class="customer-promise"><div><span>🌱</span><strong>Farm fresh</strong><small>Seasonal local produce</small></div><div><span>🤝</span><strong>Fair to farmers</strong><small>No unnecessary middlemen</small></div><div><span>🚚</span><strong>Planned delivery</strong><small>Twice a week</small></div></section><section class="shop-cta card"><div><p class="eyebrow">TODAY'S MARKET</p><h2>Bring home something fresh</h2><p class="muted">Browse available vegetables and order from local growers.</p></div><a class="btn" href="{{ url_for('shop.listing') }}">Shop vegetables →</a></section>
+{% endif %}{% endblock %}
