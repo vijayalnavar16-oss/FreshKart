@@ -10,14 +10,25 @@ from database import get_db
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 USERNAME_RE = re.compile(r"[A-Za-z0-9_]{3,30}")
-PHONE_RE = re.compile(r"\+91[6-9][0-9]{9}")
 CREATABLE_ROLES = ("customer", "farmer")
+
+
+def clean_phone(value):
+    digits = "".join(ch for ch in (value or "") if ch.isdigit())
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    if len(digits) != 10 or digits[0] not in "6789":
+        return None
+    return "+91" + digits
 
 
 @bp.route("/users", methods=["GET", "POST"])
 @login_required("admin")
 def users(admin):
     db = get_db()
+    role = request.args.get("role", "customer")
+    if role not in CREATABLE_ROLES:
+        role = "customer"
     if request.method == "POST":
         action = request.form.get("action", "")
         if action == "create":
@@ -26,16 +37,20 @@ def users(admin):
             toggle_account(db, admin)
         elif action == "update_phone":
             update_customer_phone(db)
-        return redirect(url_for("admin.users"))
+        return redirect(url_for("admin.users", role=request.form.get("role", role)))
 
     q = request.args.get("q", "").strip()[:50]
     rows = db.execute(
         """SELECT id, username, role, full_name, phone_number, is_active FROM users
-           WHERE role != 'admin' AND (username LIKE ? OR full_name LIKE ?)
+           WHERE role = ? AND (username LIKE ? OR full_name LIKE ?)
            ORDER BY id DESC""",
-        (f"%{q}%", f"%{q}%"),
+        (role, f"%{q}%", f"%{q}%"),
     ).fetchall()
-    return render_template("admin_users.html", users=rows, q=q)
+    counts = {
+        "customer": db.execute("SELECT COUNT(*) FROM users WHERE role='customer'").fetchone()[0],
+        "farmer": db.execute("SELECT COUNT(*) FROM users WHERE role='farmer'").fetchone()[0],
+    }
+    return render_template("admin_users.html", users=rows, q=q, active_role=role, counts=counts)
 
 
 @bp.route("/orders", methods=["GET", "POST"])
@@ -142,7 +157,7 @@ def create_account(db):
     role = request.form.get("role", "")
     full_name = request.form.get("full_name", "").strip()[:80]
     address = request.form.get("address", "").strip()[:300]
-    phone_number = request.form.get("phone_number", "").strip()
+    raw_phone = request.form.get("phone_number", "").strip()
 
     if not USERNAME_RE.fullmatch(username):
         flash("Username must be 3-30 letters, numbers or underscores.")
@@ -153,11 +168,12 @@ def create_account(db):
     if role not in CREATABLE_ROLES or not full_name:
         flash("Choose a role and enter a full name.")
         return
+    phone_number = clean_phone(raw_phone) if raw_phone else None
     if role == "customer" and not phone_number:
-        flash("Enter a mobile number for the customer account.")
+        flash("Enter a valid 10-digit Indian mobile number.")
         return
-    if phone_number and not PHONE_RE.fullmatch(phone_number):
-        flash("Enter an Indian mobile number in +91XXXXXXXXXX format.")
+    if raw_phone and not phone_number:
+        flash("Enter a valid 10-digit Indian mobile number.")
         return
     password_hash = generate_password_hash(password)
     try:
@@ -169,7 +185,7 @@ def create_account(db):
         )
         db.commit()
     except sqlite3.IntegrityError:
-        flash("That username already exists.")
+        flash("That username or mobile number already exists.")
         return
     flash(f"Created {role} account '{username}'.")
 
@@ -195,15 +211,15 @@ def update_customer_phone(db):
     except ValueError:
         flash("Invalid customer.")
         return
-    phone_number = request.form.get("phone_number", "").strip()
+    phone_number = clean_phone(request.form.get("phone_number", ""))
     user = db.execute(
         "SELECT id FROM users WHERE id = ? AND role = 'customer'", (user_id,)
     ).fetchone()
     if user is None:
         flash("Customer not found.")
         return
-    if not PHONE_RE.fullmatch(phone_number):
-        flash("Enter an Indian mobile number in +91XXXXXXXXXX format.")
+    if not phone_number:
+        flash("Enter a valid 10-digit Indian mobile number.")
         return
     try:
         db.execute(
