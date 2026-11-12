@@ -25,22 +25,31 @@
     <form method="get" action="{{ url_for('admin.users') }}" class="search user-search"><input type="hidden" name="role" value="{{ active_role }}"><input name="q" value="{{ q }}" placeholder="Search name or username"><button class="btn" type="submit">Search</button></form>
     <div class="user-list">
       {% for u in users %}
-      <article class="user-row user-account-row">
-        <div class="user-avatar">{{ '🛍️' if active_role == 'customer' else '🌾' }}</div>
-        <div class="user-row-main"><strong>{{ u['full_name'] }}</strong><small>@{{ u['username'] }} · {{ u['phone_number'][3:] if u['phone_number'] and u['phone_number'].startswith('+91') else (u['phone_number'] or 'No mobile linked') }}</small><small>{{ u['address'] or 'Address not added' }}</small></div>
-        <span class="status-pill {{ 'is-active' if u['is_active'] else 'is-inactive' }}">{{ 'Active' if u['is_active'] else 'Inactive' }}</span>
-        <form method="post" action="{{ url_for('admin.users', role=active_role) }}" data-confirm="Change this account's status?"><input type="hidden" name="action" value="toggle"><input type="hidden" name="role" value="{{ active_role }}"><input type="hidden" name="user_id" value="{{ u['id'] }}"><button class="btn small user-status-button" type="submit">{{ 'Pause' if u['is_active'] else 'Activate' }}</button></form>
-        <form method="post" action="{{ url_for('admin.users', role=active_role) }}" class="user-account-editor" data-account-editor>
-          <input type="hidden" name="action" value="update_account"><input type="hidden" name="role" value="{{ active_role }}"><input type="hidden" name="user_id" value="{{ u['id'] }}">
-          <div class="user-edit-grid">
-            <label>Username<input name="username" value="{{ u['username'] }}" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" readonly required></label>
-            <label>Full name<input name="full_name" value="{{ u['full_name'] }}" maxlength="80" readonly required></label>
-            <label>Mobile number<input type="tel" name="phone_number" inputmode="numeric" pattern="(?:\+?91)?[6-9][0-9]{9}" maxlength="13" value="{{ u['phone_number'][3:] if u['phone_number'] and u['phone_number'].startswith('+91') else (u['phone_number'] or '') }}" placeholder="10-digit mobile" readonly {{ 'required' if active_role == 'customer' }}></label>
-            <label class="edit-address-field">Address<input name="address" value="{{ u['address'] or '' }}" maxlength="300" placeholder="Village, area or delivery address" readonly></label>
-            <label class="edit-password-field">New password <small>Optional · leave blank to keep current</small><input type="password" name="new_password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" disabled></label>
+      <article class="user-row user-account-row" data-account-card>
+        <button type="button" class="user-account-summary" aria-expanded="false">
+          <span class="user-avatar">{{ '🛍️' if active_role == 'customer' else '🌾' }}</span>
+          <span class="user-row-main"><strong>{{ u['full_name'] }}</strong><small>@{{ u['username'] }}</small></span>
+          <span class="status-pill {{ 'is-active' if u['is_active'] else 'is-inactive' }}">{{ 'Active' if u['is_active'] else 'Inactive' }}</span>
+          <span class="account-chevron" aria-hidden="true">⌄</span>
+        </button>
+        <div class="user-account-details" hidden>
+          <div class="account-detail-preview">
+            <div><small>Mobile number</small><strong>{{ u['phone_number'][3:] if u['phone_number'] and u['phone_number'].startswith('+91') else (u['phone_number'] or 'Not added') }}</strong></div>
+            <div><small>Address</small><strong>{{ u['address'] or 'Not added' }}</strong></div>
           </div>
-          <div class="user-edit-actions"><button class="btn small user-edit-toggle" type="button">✎ Edit details</button><button class="btn small user-edit-done" type="submit" hidden>Done</button><button class="user-edit-cancel" type="button" hidden>Cancel</button></div>
-        </form>
+          <form method="post" action="{{ url_for('admin.users', role=active_role) }}" class="account-status-form" data-confirm="Change this account's status?"><input type="hidden" name="action" value="toggle"><input type="hidden" name="role" value="{{ active_role }}"><input type="hidden" name="user_id" value="{{ u['id'] }}"><button class="btn small user-status-button" type="submit">{{ 'Pause account' if u['is_active'] else 'Activate account' }}</button></form>
+          <form method="post" action="{{ url_for('admin.users', role=active_role) }}" class="user-account-editor" data-account-editor>
+            <input type="hidden" name="action" value="update_account"><input type="hidden" name="role" value="{{ active_role }}"><input type="hidden" name="user_id" value="{{ u['id'] }}">
+            <div class="user-edit-grid">
+              <label>Username<input name="username" value="{{ u['username'] }}" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" readonly required></label>
+              <label>Full name<input name="full_name" value="{{ u['full_name'] }}" maxlength="80" readonly required></label>
+              <label>Mobile number<input type="tel" name="phone_number" inputmode="numeric" pattern="(?:\+?91)?[6-9][0-9]{9}" maxlength="13" value="{{ u['phone_number'][3:] if u['phone_number'] and u['phone_number'].startswith('+91') else (u['phone_number'] or '') }}" placeholder="10-digit mobile" readonly {{ 'required' if active_role == 'customer' }}></label>
+              <label class="edit-address-field">Address<input name="address" value="{{ u['address'] or '' }}" maxlength="300" placeholder="Village, area or delivery address" readonly></label>
+              <label class="edit-password-field">New password <small>Optional · leave blank to keep current</small><input type="password" name="new_password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" disabled></label>
+            </div>
+            <div class="user-edit-actions"><button class="btn small user-edit-toggle" type="button">✎ Edit details</button><button class="btn small user-edit-done" type="submit" hidden>Done</button><button class="user-edit-cancel" type="button" hidden>Cancel</button></div>
+          </form>
+        </div>
       </article>
       {% else %}<div class="user-empty"><span>🌿</span><strong>No {{ active_role }} accounts yet</strong><small>Create the first account using the form above.</small></div>{% endfor %}
     </div>
