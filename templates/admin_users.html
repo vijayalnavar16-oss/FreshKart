@@ -1,86 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="card">
-  <h2>Create account</h2>
-  <form method="post" action="{{ url_for('admin.users') }}" class="grid-form">
-    <input type="hidden" name="action" value="create">
-    <label>Username
-      <input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}">
-    </label>
-    <label>Full name
-      <input name="full_name" required maxlength="80">
-    </label>
-    <label>Customer mobile number (+91XXXXXXXXXX)
-      <input type="tel" name="phone_number" pattern="\+91[6-9][0-9]{9}" maxlength="13" autocomplete="tel" required>
-    </label>
-    <label>Temporary password (8+ characters)
-      <input type="password" name="password" required minlength="8" autocomplete="new-password">
-    </label>
-    <label>Role
-      <select name="role" id="account-role">
-        <option value="customer">Customer</option>
-        <option value="farmer">Farmer</option>
-      </select>
-    </label>
-    <label>Address
-      <input name="address" maxlength="300">
-    </label>
-    <button class="btn" type="submit">Create account</button>
-  </form>
-</section>
-<script>
-  const accountRole = document.getElementById("account-role");
-  const customerPhone = document.querySelector('input[name="phone_number"]');
-  const syncCustomerPhone = () => {
-    customerPhone.required = accountRole.value === "customer";
-  };
-  accountRole.addEventListener("change", syncCustomerPhone);
-  syncCustomerPhone();
-</script>
-
-<section class="card">
-  <h2>Users</h2>
-  <form method="get" action="{{ url_for('admin.users') }}" class="search">
-    <input name="q" value="{{ q }}" placeholder="Search by name or username">
-    <button class="btn" type="submit">Search</button>
-  </form>
-  <div class="table-wrap">
-    <table class="list">
-      <thead><tr><th>Name</th><th>Username</th><th>Mobile</th><th>Role</th><th>Status</th><th></th></tr></thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>{{ u['full_name'] }}</td>
-          <td>{{ u['username'] }}</td>
-          <td>
-            {% if u['role'] == 'customer' %}
-            <form method="post" action="{{ url_for('admin.users') }}" class="stack">
-              <input type="hidden" name="action" value="update_phone">
-              <input type="hidden" name="user_id" value="{{ u['id'] }}">
-              <input type="tel" name="phone_number" value="{{ u['phone_number'] or '' }}"
-                     pattern="\+91[6-9][0-9]{9}" maxlength="13" autocomplete="tel" required
-                     aria-label="Mobile number for {{ u['full_name'] }}">
-              <button class="btn small" type="submit">Save mobile</button>
-            </form>
-            {% else %}
-            {{ u['phone_number'] or 'Not linked' }}
-            {% endif %}
-          </td>
-          <td>{{ u['role'] }}</td>
-          <td>{{ 'Active' if u['is_active'] else 'Inactive' }}</td>
-          <td>
-            <form method="post" action="{{ url_for('admin.users') }}" data-confirm="Change this account's status?">
-              <input type="hidden" name="action" value="toggle">
-              <input type="hidden" name="user_id" value="{{ u['id'] }}">
-              <button class="btn small" type="submit">{{ 'Deactivate' if u['is_active'] else 'Activate' }}</button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr><td colspan="6" class="muted">No accounts found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<section class="users-page">
+  <div class="users-heading"><div><p class="admin-eyebrow">FRESHKART · PEOPLE</p><h1>Manage accounts</h1><p>Add and manage customers and farming partners separately.</p></div><div class="users-heading-art" aria-hidden="true">🌱</div></div>
+  <nav class="user-role-tabs" aria-label="Account type">
+    <a class="{{ 'active' if active_role == 'customer' }}" href="{{ url_for('admin.users', role='customer') }}"><span class="role-tab-icon">🛍️</span><span><strong>Customers</strong><small>{{ counts.customer }} accounts</small></span></a>
+    <a class="{{ 'active' if active_role == 'farmer' }}" href="{{ url_for('admin.users', role='farmer') }}"><span class="role-tab-icon">🧑‍🌾</span><span><strong>Farmers</strong><small>{{ counts.farmer }} accounts</small></span></a>
+  </nav>
+  <section class="card user-create-card">
+    <div class="user-card-heading"><div class="user-role-illustration">{{ '🛍️' if active_role == 'customer' else '🌾' }}</div><div><p class="admin-eyebrow">NEW {{ active_role|upper }}</p><h2>{{ 'Add a customer' if active_role == 'customer' else 'Add a farmer' }}</h2><p>{{ 'Create a shopper account for your marketplace.' if active_role == 'customer' else 'Register a farmer to manage their own produce.' }}</p></div></div>
+    <form method="post" action="{{ url_for('admin.users', role=active_role) }}" class="user-create-form">
+      <input type="hidden" name="action" value="create"><input type="hidden" name="role" value="{{ active_role }}">
+      <div class="user-form-grid">
+        <label>Username<input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" placeholder="e.g. ravi_farm"></label>
+        <label>Full name<input name="full_name" required maxlength="80" placeholder="Enter full name"></label>
+        <label>Mobile number <span class="field-hint">{{ 'Required' if active_role == 'customer' else 'Optional' }} · 10 digits</span><input type="tel" name="phone_number" inputmode="numeric" autocomplete="tel-national" pattern="(?:\+?91)?[6-9][0-9]{9}" maxlength="13" placeholder="Mobile number" {{ 'required' if active_role == 'customer' }}></label>
+        <label>Temporary password<input type="password" name="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label>
+        <label class="full-span">Address <span class="field-hint">Optional</span><input name="address" maxlength="300" placeholder="Village, area or delivery address"></label>
+      </div>
+      <button class="btn user-submit" type="submit">＋ Create {{ active_role }}</button>
+    </form>
+  </section>
+  <section class="card user-list-card">
+    <div class="admin-section-heading"><div><p class="admin-eyebrow">ACCOUNT DIRECTORY</p><h2>{{ 'Customers' if active_role == 'customer' else 'Farmers' }}</h2></div><span class="user-count-pill">{{ users|length }} shown</span></div>
+    <form method="get" action="{{ url_for('admin.users') }}" class="search user-search"><input type="hidden" name="role" value="{{ active_role }}"><input name="q" value="{{ q }}" placeholder="Search name or username"><button class="btn" type="submit">Search</button></form>
+    <div class="user-list">
+      {% for u in users %}
+      <article class="user-row"><div class="user-avatar">{{ '🛍️' if active_role == 'customer' else '🌾' }}</div><div class="user-row-main"><strong>{{ u['full_name'] }}</strong><small>@{{ u['username'] }} · {{ u['phone_number'][3:] if u['phone_number'] and u['phone_number'].startswith('+91') else (u['phone_number'] or 'No mobile linked') }}</small></div><span class="status-pill {{ 'is-active' if u['is_active'] else 'is-inactive' }}">{{ 'Active' if u['is_active'] else 'Inactive' }}</span>
+        <form method="post" action="{{ url_for('admin.users', role=active_role) }}" data-confirm="Change this account's status?"><input type="hidden" name="action" value="toggle"><input type="hidden" name="role" value="{{ active_role }}"><input type="hidden" name="user_id" value="{{ u['id'] }}"><button class="btn small user-status-button" type="submit">{{ 'Pause' if u['is_active'] else 'Activate' }}</button></form>
+        {% if active_role == 'customer' %}<form method="post" action="{{ url_for('admin.users', role=active_role) }}" class="user-phone-edit"><input type="hidden" name="action" value="update_phone"><input type="hidden" name="role" value="{{ active_role }}"><input type="hidden" name="user_id" value="{{ u['id'] }}"><input type="tel" name="phone_number" inputmode="numeric" pattern="(?:\+?91)?[6-9][0-9]{9}" maxlength="13" value="{{ u['phone_number'][3:] if u['phone_number'] and u['phone_number'].startswith('+91') else (u['phone_number'] or '') }}" placeholder="10-digit mobile" required><button class="btn small" type="submit">Save</button></form>{% endif %}
+      </article>
+      {% else %}<div class="user-empty"><span>🌿</span><strong>No {{ active_role }} accounts yet</strong><small>Create the first account using the form above.</small></div>{% endfor %}
+    </div>
+  </section>
 </section>
 {% endblock %}
