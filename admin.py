@@ -35,13 +35,13 @@ def users(admin):
             create_account(db)
         elif action == "toggle":
             toggle_account(db, admin)
-        elif action == "update_phone":
-            update_customer_phone(db)
+        elif action == "update_account":
+            update_account(db)
         return redirect(url_for("admin.users", role=request.form.get("role", role)))
 
     q = request.args.get("q", "").strip()[:50]
     rows = db.execute(
-        """SELECT id, username, role, full_name, phone_number, is_active FROM users
+        """SELECT id, username, role, full_name, phone_number, address, is_active FROM users
            WHERE role = ? AND (username LIKE ? OR full_name LIKE ?)
            ORDER BY id DESC""",
         (role, f"%{q}%", f"%{q}%"),
@@ -204,6 +204,67 @@ def toggle_account(db, admin):
     db.commit()
     flash("Account updated." if cur.rowcount else "User not found.")
 
+
+
+def update_account(db):
+    try:
+        user_id = int(request.form.get("user_id", ""))
+    except ValueError:
+        flash("Invalid account.")
+        return
+    role = request.form.get("role", "")
+    username = request.form.get("username", "").strip()
+    full_name = request.form.get("full_name", "").strip()[:80]
+    address = request.form.get("address", "").strip()[:300]
+    raw_phone = request.form.get("phone_number", "").strip()
+    new_password = request.form.get("new_password", "")
+    phone_number = clean_phone(raw_phone) if raw_phone else None
+
+    if role not in CREATABLE_ROLES:
+        flash("Invalid account type.")
+        return
+    if not USERNAME_RE.fullmatch(username):
+        flash("Username must be 3-30 letters, numbers or underscores.")
+        return
+    if not full_name:
+        flash("Enter the full name.")
+        return
+    if raw_phone and not phone_number:
+        flash("Enter a valid 10-digit Indian mobile number.")
+        return
+    if role == "customer" and not phone_number:
+        flash("A customer must have a valid 10-digit mobile number.")
+        return
+    if new_password and len(new_password) < 8:
+        flash("New password must be at least 8 characters.")
+        return
+
+    user = db.execute(
+        "SELECT id FROM users WHERE id = ? AND role = ?", (user_id, role)
+    ).fetchone()
+    if user is None:
+        flash("Account not found.")
+        return
+    try:
+        if new_password:
+            db.execute(
+                """UPDATE users SET username=?, full_name=?, phone_number=?, address=?,
+                   password_hash=? WHERE id=? AND role=?""",
+                (username, full_name, phone_number, address,
+                 generate_password_hash(new_password), user_id, role),
+            )
+        else:
+            db.execute(
+                """UPDATE users SET username=?, full_name=?, phone_number=?, address=?
+                   WHERE id=? AND role=?""",
+                (username, full_name, phone_number, address, user_id, role),
+            )
+        db.commit()
+    except sqlite3.IntegrityError:
+        db.rollback()
+        flash("That username or mobile number is already used by another account.")
+        return
+    flash(f"{role.title()} account updated.")
 
 def update_customer_phone(db):
     try:
