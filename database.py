@@ -34,6 +34,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_number ON users(phone_number) 
 """
 
 POSTGRES_SCHEMA = """
+CREATE SCHEMA IF NOT EXISTS freshkart;
+SET search_path TO freshkart, public;
 CREATE TABLE IF NOT EXISTS users (id BIGSERIAL PRIMARY KEY, username TEXT UNIQUE NOT NULL,
  password_hash TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','farmer','customer')),
  full_name TEXT NOT NULL, address TEXT NOT NULL DEFAULT '', phone_number TEXT UNIQUE,
@@ -108,7 +110,7 @@ def connect():
     if USE_POSTGRES:
         import psycopg2
         from psycopg2.extras import DictCursor
-        raw = psycopg2.connect(DATABASE_URL, sslmode="require", cursor_factory=DictCursor, connect_timeout=15)
+        raw = psycopg2.connect(DATABASE_URL, sslmode="require", cursor_factory=DictCursor, connect_timeout=15, options="-c search_path=freshkart,public")
         return PgConnection(raw)
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
