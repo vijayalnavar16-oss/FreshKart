@@ -222,3 +222,23 @@ a.admin-stat:hover{transform:translateY(-4px);box-shadow:0 14px 28px rgba(25,66,
  .account-detail-preview{grid-template-columns:1fr}
  .user-account-details .user-edit-grid{grid-template-columns:1fr}
 }
+
+
+/* Vegetable management: constrain uploaded photos so they never expand the table */
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+table.list{width:100%;min-width:650px;table-layout:auto}
+table.list th,table.list td{vertical-align:middle}
+table.list th:first-child,table.list td:first-child{width:92px;min-width:92px}
+table.list img.thumb{display:block;width:76px!important;height:76px!important;max-width:76px!important;max-height:76px!important;min-width:76px;object-fit:cover;object-position:center;border-radius:12px;background:#edf4e9;border:1px solid #e5eee2}
+table.list td:nth-child(2){font-weight:800;color:#294b36;min-width:125px}
+table.list td:nth-child(4),table.list td:nth-child(5){white-space:nowrap}
+table.list .actions-cell{display:flex;align-items:center;gap:7px;white-space:nowrap}
+table.list .actions-cell form{margin:0}
+@media(max-width:640px){
+  .table-wrap{overflow-x:auto;overscroll-behavior-x:contain}
+  table.list{min-width:620px}
+  table.list th,table.list td{padding:10px 9px;font-size:11px}
+  table.list th:first-child,table.list td:first-child{width:82px;min-width:82px}
+  table.list img.thumb{width:64px!important;height:64px!important;max-width:64px!important;max-height:64px!important;min-width:64px;border-radius:10px}
+  table.list .btn.small{padding:8px 10px;font-size:10px}
+}
