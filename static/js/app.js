@@ -75,3 +75,37 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 })();
+
+document.addEventListener("click", function (event) {
+  var edit = event.target.closest("[data-account-editor] .user-edit-toggle");
+  var cancel = event.target.closest("[data-account-editor] .user-edit-cancel");
+  if (edit) {
+    var form = edit.closest("[data-account-editor]");
+    form.classList.add("is-editing");
+    form.querySelectorAll("input[readonly]").forEach(function (field) { field.readOnly = false; });
+    var password = form.querySelector('input[name="new_password"]');
+    if (password) password.disabled = false;
+    edit.hidden = true;
+    form.querySelector(".user-edit-done").hidden = false;
+    form.querySelector(".user-edit-cancel").hidden = false;
+    var first = form.querySelector('input[name="username"]');
+    if (first) first.focus();
+  }
+  if (cancel) {
+    var form = cancel.closest("[data-account-editor]");
+    form.reset();
+    form.classList.remove("is-editing");
+    form.querySelectorAll("input[readonly]").forEach(function (field) { field.readOnly = true; });
+    var password = form.querySelector('input[name="new_password"]');
+    if (password) { password.value = ""; password.disabled = true; }
+    form.querySelector(".user-edit-toggle").hidden = false;
+    form.querySelector(".user-edit-done").hidden = true;
+    cancel.hidden = true;
+  }
+});
+document.addEventListener("submit", function (event) {
+  var form = event.target.closest("[data-account-editor]");
+  if (!form) return;
+  var button = form.querySelector(".user-edit-done");
+  if (button) { button.disabled = true; button.textContent = "Updating…"; }
+});
