@@ -16,8 +16,11 @@
       {% if user['role'] in ['admin','farmer'] %}<a href="{{ url_for('products.manage') }}">Manage products</a>{% endif %}
       {% if user['role'] == 'admin' %}<a href="{{ url_for('admin.orders') }}">Orders</a><a href="{{ url_for('admin.users') }}">Users</a>{% endif %}
     {% endif %}</nav>
-    <div class="header-actions"><nav class="lang" aria-label="Language">{% for code, label in LANGS.items() %}<a href="{{ url_for('set_lang', code=code) }}" class="{{ 'on' if code == lang }}">{{ label }}</a>{% endfor %}</nav>{% if user %}<span class="user-pill"><span class="user-dot"></span>{{ user['full_name'] }}</span>{% endif %}</div>
+    <div class="header-actions">
+      {% if user and user['role'] == 'admin' %}<button class="admin-menu-toggle" id="admin-menu-toggle" type="button" aria-label="Open admin menu" aria-expanded="false" aria-controls="admin-menu-panel"><span></span><span></span><span></span></button>{% endif %}
+      <nav class="lang" aria-label="Language">{% for code, label in LANGS.items() %}<a href="{{ url_for('set_lang', code=code) }}" class="{{ 'on' if code == lang }}">{{ label }}</a>{% endfor %}</nav>{% if user %}<span class="user-pill"><span class="user-dot"></span>{{ user['full_name'] }}</span>{% endif %}</div>
   </div></header>
+  {% if user and user['role'] == 'admin' %}<div class="admin-menu-backdrop" id="admin-menu-backdrop"></div><aside class="admin-menu-panel" id="admin-menu-panel" aria-label="Admin menu" aria-hidden="true"><div class="admin-menu-title"><span>🌿 Market tools</span><button type="button" id="admin-menu-close" aria-label="Close menu">×</button></div><a href="{{ url_for('home') }}"><span>⌂</span> Dashboard</a><a href="{{ url_for('admin.users', role='customer') }}"><span>🛍️</span> Customers</a><a href="{{ url_for('admin.users', role='farmer') }}"><span>🧑‍🌾</span> Farmers</a><a href="{{ url_for('admin.orders') }}"><span>📦</span> Orders</a><a href="{{ url_for('products.manage') }}"><span>🥬</span> Vegetables & stock</a><form method="post" action="{{ url_for('logout') }}"><button type="submit"><span>↪</span> Logout</button></form></aside>{% endif %}
   <main class="page-shell">{% for message in get_flashed_messages() %}<div class="flash" role="alert">{{ message }}</div>{% endfor %}{% block content %}{% endblock %}</main>
   {% if user %}<nav class="bottom" aria-label="Mobile navigation">
     <a href="{{ url_for('home') }}"><span class="nav-emoji">⌂</span><span>{{ t('home') }}</span></a>
@@ -26,5 +29,5 @@
     {% if user['role'] == 'admin' %}<a href="{{ url_for('admin.orders') }}"><span class="nav-emoji">▤</span><span>Orders</span></a><a href="{{ url_for('admin.users') }}"><span class="nav-emoji">♙</span><span>{{ t('users') }}</span></a>{% endif %}
     <form method="post" action="{{ url_for('logout') }}" data-confirm="{{ t('confirm_logout') }}"><button type="submit"><span class="nav-emoji">↪</span><span>{{ t('logout') }}</span></button></form>
   </nav>{% endif %}
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </body></html>
