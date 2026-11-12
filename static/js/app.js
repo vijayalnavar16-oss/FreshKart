@@ -38,3 +38,40 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 4500);
   });
 });
+
+
+(function () {
+  document.querySelectorAll("[data-phone-editor]").forEach(function (form) {
+    var input = form.querySelector('input[name="phone_number"]');
+    var button = form.querySelector(".user-edit-toggle");
+    if (!input || !button) return;
+    button.addEventListener("click", function () {
+      if (input.readOnly) {
+        input.readOnly = false;
+        button.textContent = "Done";
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      } else {
+        input.blur();
+      }
+    });
+    input.addEventListener("blur", function () {
+      input.readOnly = true;
+      button.textContent = "✎ Edit";
+      if (input.value.trim() !== input.dataset.original) {
+        if (input.checkValidity()) form.requestSubmit();
+        else input.reportValidity();
+      }
+    });
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        input.blur();
+      }
+      if (event.key === "Escape") {
+        input.value = input.dataset.original || "";
+        input.blur();
+      }
+    });
+  });
+})();
