@@ -91,7 +91,7 @@ def home(user):
         recent_orders = get_db().execute(
             """SELECT o.id, o.total, o.delivery_date, o.status, o.created_at,
                       u.full_name AS customer_name,
-                      (SELECT group_concat(p.name || ' × ' || oi.quantity, ', ')
+                      (SELECT string_agg(p.name || ' × ' || oi.quantity::text, ', ')
                        FROM order_items oi JOIN products p ON p.id = oi.product_id
                        WHERE oi.order_id = o.id) AS item_summary
                FROM orders o JOIN users u ON u.id = o.customer_id
