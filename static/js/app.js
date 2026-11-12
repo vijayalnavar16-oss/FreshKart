@@ -109,3 +109,16 @@ document.addEventListener("submit", function (event) {
   var button = form.querySelector(".user-edit-done");
   if (button) { button.disabled = true; button.textContent = "Updating…"; }
 });
+
+
+/* Account cards stay compact; tap a row to reveal its profile and edit controls. */
+document.addEventListener("click", function (event) {
+  var summary = event.target.closest("[data-account-card] .user-account-summary");
+  if (!summary) return;
+  var card = summary.closest("[data-account-card]");
+  var details = card.querySelector(".user-account-details");
+  var opening = summary.getAttribute("aria-expanded") !== "true";
+  summary.setAttribute("aria-expanded", String(opening));
+  details.hidden = !opening;
+  card.classList.toggle("is-expanded", opening);
+});
