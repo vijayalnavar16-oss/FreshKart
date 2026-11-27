@@ -41,6 +41,23 @@ def healthz():
     }
 
 
+@app.route("/health/db")
+def database_health():
+    """Check the configured database without exposing credentials or query details."""
+    try:
+        row = get_db().execute("SELECT 1").fetchone()
+        if row is None or row[0] != 1:
+            raise RuntimeError("Database check returned no result")
+        return {"status": "ok", "database": "connected"}, 200, {
+            "Cache-Control": "no-store",
+        }
+    except Exception:
+        app.logger.exception("FreshKart database health check failed")
+        return {"status": "error", "database": "unavailable"}, 503, {
+            "Cache-Control": "no-store",
+        }
+
+
 @app.context_processor
 def inject_globals():
     return {"user": current_user(), "lang": session.get("lang", "kn"), "LANGS": LANGS,
