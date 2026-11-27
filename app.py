@@ -30,8 +30,14 @@ USERNAME_RE = re.compile(r"[A-Za-z0-9_]{3,30}")
 
 @app.route("/healthz")
 def healthz():
-    """Lightweight health check: no session lookup or database query."""
-    return {"status": "ok"}, 200
+    """Lightweight cross-origin health check for the FreshKart welcome page."""
+    return {
+        "status": "ok",
+        "service": "freshkart",
+    }, 200, {
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store",
+    }
 
 
 @app.context_processor
