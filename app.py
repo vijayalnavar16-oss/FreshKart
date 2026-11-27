@@ -12,11 +12,14 @@ from products import bp as products_bp
 from shop import bp as shop_bp
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY") or os.urandom(32)
+secret_key = os.environ.get("SECRET_KEY")
+if os.environ.get("FRESHKART_CLOUDFLARE") and not secret_key:
+    raise RuntimeError("Missing SECRET_KEY: add it as a Cloudflare Worker secret before deploying FreshKart.")
+app.secret_key = secret_key or os.urandom(32)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
+    SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER") or os.environ.get("FRESHKART_CLOUDFLARE")),
     MAX_CONTENT_LENGTH = 3 * 1024 * 1024,  # products.py enforces the 2 MB photo limit
 )
 app.jinja_env.globals["t"] = t
