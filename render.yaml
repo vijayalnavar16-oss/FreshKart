@@ -3,9 +3,9 @@ services:
     name: freshkart
     runtime: python
     plan: free
-    healthCheckPath: /login
+    healthCheckPath: /healthz
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120 --preload app:app
     envVars:
       - key: SECRET_KEY
         generateValue: true
