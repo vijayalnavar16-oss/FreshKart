@@ -1,8 +1,7 @@
-"""Cloudflare Python Worker entry point for the FreshKart Flask application.
+"""Cloudflare Python Worker entry point for FreshKart."""
+import os
+os.environ["FRESHKART_CLOUDFLARE"] = "1"
 
-The app remains in app.py so the same Flask routes and templates can be tested
-locally before the Cloudflare cutover.
-"""
 from workers import wsgi
 from app import app
 
