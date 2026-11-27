@@ -3,7 +3,7 @@ import os
 import sqlite3
 import sys
 
-from flask import g
+from flask import g, has_request_context, request
 from werkzeug.security import generate_password_hash
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -63,12 +63,60 @@ CREATE TABLE IF NOT EXISTS app_settings (
 """
 
 
+class _Row(dict):
+    def __init__(self, names, values):
+        super().__init__(zip(names, values))
+        self._values = tuple(values)
+    def __getitem__(self, key):
+        return self._values[key] if isinstance(key, int) else super().__getitem__(key)
+
+class _PgCursor:
+    def __init__(self, cursor):
+        self.cursor = cursor
+        self.rowcount = cursor.rowcount
+    def _convert(self, values):
+        if values is None: return None
+        return _Row([c[0] for c in (self.cursor.description or ())], values)
+    def fetchone(self): return self._convert(self.cursor.fetchone())
+    def fetchall(self): return [self._convert(row) for row in self.cursor.fetchall()]
+
+class _PgConnection:
+    def __init__(self, connection): self.connection = connection
+    def execute(self, sql, params=()):
+        sql = sql.replace("BEGIN IMMEDIATE", "BEGIN")
+        sql = sql.replace("group_concat(p.name || ' × ' || oi.quantity, ', ')", "string_agg(p.name || ' × ' || oi.quantity::text, ', ')")
+        cursor = self.connection.cursor()
+        cursor.execute(sql.replace("?", "%s"), tuple(params or ()))
+        return _PgCursor(cursor)
+    def commit(self): self.connection.commit()
+    def rollback(self): self.connection.rollback()
+    def close(self): self.connection.close()
+
 def connect():
+    """Use Hyperdrive/PostgreSQL in Worker requests; SQLite remains for local tests."""
+    worker_env = request.environ.get("workers.env") if has_request_context() else None
+    hyperdrive = getattr(worker_env, "HYPERDRIVE", None) if worker_env is not None else None
+    if hyperdrive is not None:
+        import pg8000
+        connection = pg8000.connect(
+            host=str(hyperdrive.host), port=int(hyperdrive.port),
+            database=str(hyperdrive.database), user=str(hyperdrive.user),
+            password=str(hyperdrive.password), ssl_context=None, timeout=10,
+        )
+        return _PgConnection(connection)
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+def is_integrity_error(error):
+    if isinstance(error, sqlite3.IntegrityError): return True
+    try:
+        import pg8000.exceptions
+        return isinstance(error, pg8000.exceptions.IntegrityError)
+    except (ImportError, AttributeError):
+        return False
 
 
 def get_db():
