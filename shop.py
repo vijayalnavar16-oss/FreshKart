@@ -260,7 +260,7 @@ def checkout(user):
     db = get_db()
 
     try:
-        db.execute("BEGIN IMMEDIATE")  # lock the database while stock is checked and reduced
+        db.execute("BEGIN")  # transaction protects stock checks and reservations
         delivery_charge = get_delivery_charge(db)
         items, subtotal = load_cart_items(db, cart)
         if len(items) != len(cart):
@@ -277,11 +277,11 @@ def checkout(user):
             """INSERT INTO orders
                (customer_id, total, delivery_charge, address, delivery_date, payment_method,
                 customer_phone, payment_status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id""",
             (user["id"], total, delivery_charge, address, delivery, payment, phone,
              "pending" if payment == "UPI" else "cash_on_delivery"),
         )
-        order_id = cur.lastrowid
+        order_id = cur.fetchone()["id"]
         for item in items:
             db.execute(
                 "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
