@@ -8,6 +8,7 @@ document.addEventListener("submit", function (event) {
   }
   var button = form.querySelector("button[type=submit], button:not([type])");
   if (button) { button.disabled = true; }
+  showFreshKartLoading();
 });
 
 (function () {
@@ -122,3 +123,14 @@ document.addEventListener("click", function (event) {
   details.hidden = !opening;
   card.classList.toggle("is-expanded", opening);
 });
+
+/* FreshKart branded progress overlay for navigation/form requests (not Render cold-start page). */
+function showFreshKartLoading() {
+  if (document.getElementById("fk-loading-overlay")) return;
+  var overlay = document.createElement("div");
+  overlay.id = "fk-loading-overlay";
+  overlay.setAttribute("role", "status");
+  overlay.setAttribute("aria-live", "polite");
+  overlay.innerHTML = '<div class="fk-loading-card"><div class="fk-loading-mark">🌿</div><div class="fk-loading-produce">🥬　🍅　🥕</div><h2>FreshKart</h2><p>Bringing fresh produce to your doorstep…</p><div class="fk-loading-track"><span></span></div><small>From our farmers, with care.</small></div>';
+  document.body.appendChild(overlay);
+}
