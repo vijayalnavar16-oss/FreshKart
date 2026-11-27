@@ -184,8 +184,8 @@ def create_account(db):
         )
         db.commit()
     except Exception as exc:
-            if not is_integrity_error(exc):
-                raise
+        if not is_integrity_error(exc):
+            raise
         flash("That username or mobile number already exists.")
         return
     flash(f"Created {role} account '{username}'.")
@@ -262,8 +262,8 @@ def update_account(db):
             )
         db.commit()
     except Exception as exc:
-            if not is_integrity_error(exc):
-                raise
+        if not is_integrity_error(exc):
+            raise
         db.rollback()
         flash("That username or mobile number is already used by another account.")
         return
@@ -291,8 +291,8 @@ def update_customer_phone(db):
         )
         db.commit()
     except Exception as exc:
-            if not is_integrity_error(exc):
-                raise
+        if not is_integrity_error(exc):
+            raise
         flash("That mobile number is already assigned to another account.")
         return
     flash("Customer mobile number updated.")
