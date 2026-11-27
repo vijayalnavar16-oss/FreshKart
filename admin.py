@@ -1,12 +1,11 @@
 """Admin user management: create customer and farmer accounts, search, activate or deactivate."""
 import re
-import sqlite3
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from werkzeug.security import generate_password_hash
 
 from auth import login_required
-from database import get_db
+from database import IntegrityError, get_db
 
 bp = Blueprint("admin", __name__, url_prefix="/admin")
 USERNAME_RE = re.compile(r"[A-Za-z0-9_]{3,30}")
@@ -184,7 +183,7 @@ def create_account(db):
             (username, password_hash, role, full_name, address, phone_number or None),
         )
         db.commit()
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         flash("That username or mobile number already exists.")
         return
     flash(f"Created {role} account '{username}'.")
@@ -260,7 +259,7 @@ def update_account(db):
                 (username, full_name, phone_number, address, user_id, role),
             )
         db.commit()
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         db.rollback()
         flash("That username or mobile number is already used by another account.")
         return
@@ -287,7 +286,7 @@ def update_customer_phone(db):
             "UPDATE users SET phone_number = ? WHERE id = ?", (phone_number, user_id)
         )
         db.commit()
-    except sqlite3.IntegrityError:
+    except IntegrityError:
         flash("That mobile number is already assigned to another account.")
         return
     flash("Customer mobile number updated.")

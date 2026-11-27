@@ -3,3 +3,4 @@ Werkzeug==3.0.3
 gunicorn==22.0.0
 tzdata
 qrcode==8.2
+psycopg2-binary==2.9.10

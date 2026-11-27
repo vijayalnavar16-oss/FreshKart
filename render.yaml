@@ -9,9 +9,11 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
-      - key: ADMIN_USERNAME
+      - key: DATABASE_URL
         sync: false
-      - key: ADMIN_PASSWORD
+      - key: FRESHKART_ADMIN_USERNAME
+        sync: false
+      - key: FRESHKART_ADMIN_PASSWORD
         sync: false
       - key: UPI_ID
         value: 8296863406@ybl
