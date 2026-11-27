@@ -242,3 +242,11 @@ table.list .actions-cell form{margin:0}
   table.list img.thumb{width:64px!important;height:64px!important;max-width:64px!important;max-height:64px!important;min-width:64px;border-radius:10px}
   table.list .btn.small{padding:8px 10px;font-size:10px}
 }
+
+/* FreshKart branded request/loading screen */
+#fk-loading-overlay{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 15% 15%,#f4f8df,transparent 45%),linear-gradient(145deg,#f9fbf3,#e8f3e4);animation:fk-overlay-in .2s ease both}
+.fk-loading-card{width:min(440px,100%);padding:36px 28px;text-align:center;background:#fff;border:1px solid #e1eddf;border-radius:26px;box-shadow:0 24px 65px rgba(23,107,69,.12)}
+.fk-loading-mark{width:68px;height:68px;margin:0 auto 12px;display:grid;place-items:center;border-radius:22px;background:linear-gradient(145deg,#e7f5df,#fff0d5);font-size:34px;animation:fk-soft-float 2.5s ease-in-out infinite}
+.fk-loading-produce{font-size:24px;letter-spacing:2px;margin:10px 0}.fk-loading-card h2{color:#176b45;margin:5px 0 8px;font-size:28px}.fk-loading-card p{font-size:14px;margin:0 0 20px}.fk-loading-track{height:7px;border-radius:99px;overflow:hidden;background:#e9f3e5;margin:0 0 16px}.fk-loading-track span{display:block;width:38%;height:100%;border-radius:99px;background:linear-gradient(90deg,#176b45,#81bc65);animation:fk-loading-progress 1.15s ease-in-out infinite alternate}.fk-loading-card small{font-size:11px;color:#758478;font-weight:700;letter-spacing:.4px}
+@keyframes fk-overlay-in{from{opacity:0}to{opacity:1}}@keyframes fk-loading-progress{from{transform:translateX(-15%)}to{transform:translateX(165%)}}
+@media(prefers-reduced-motion:reduce){#fk-loading-overlay,.fk-loading-mark,.fk-loading-track span{animation:none!important}}
