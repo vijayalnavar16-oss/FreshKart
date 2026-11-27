@@ -2,6 +2,7 @@
 import os
 import sqlite3
 import sys
+import re
 
 from flask import g, has_request_context, request
 from werkzeug.security import generate_password_hash
@@ -85,6 +86,14 @@ class _PgConnection:
     def execute(self, sql, params=()):
         sql = sql.replace("BEGIN IMMEDIATE", "BEGIN")
         sql = sql.replace("group_concat(p.name || ' × ' || oi.quantity, ', ')", "string_agg(p.name || ' × ' || oi.quantity::text, ', ')")
+        # The Flask application uses its original logical table names. Map those
+        # SQL table references to the fk_* PostgreSQL tables in Supabase.
+        sql = re.sub(
+            r"\b(FROM|JOIN|INTO|UPDATE|REFERENCES)\s+(users|products|orders|order_items|app_settings)\b",
+            lambda match: f"{match.group(1)} fk_{match.group(2)}",
+            sql,
+            flags=re.IGNORECASE,
+        )
         cursor = self.connection.cursor()
         cursor.execute(sql.replace("?", "%s"), tuple(params or ()))
         return _PgCursor(cursor)
