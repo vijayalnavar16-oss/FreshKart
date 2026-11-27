@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "freshkart",
+  "main": "src/worker.py",
+  "compatibility_date": "2026-11-28",
+  "compatibility_flags": ["python_workers"],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "0ec81e4872954f2dac504e6a7ba83536"
+    }
+  ]
+}
