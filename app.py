@@ -24,7 +24,8 @@ app.teardown_appcontext(close_db)
 app.register_blueprint(admin_bp)
 app.register_blueprint(products_bp)
 app.register_blueprint(shop_bp)
-init_db()
+if not os.environ.get('FRESHKART_CLOUDFLARE'):
+    init_db()
 USERNAME_RE = re.compile(r"[A-Za-z0-9_]{3,30}")
 
 
