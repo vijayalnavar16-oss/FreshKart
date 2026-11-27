@@ -17,7 +17,7 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=bool(os.environ.get("RENDER")),
-    MAX_CONTENT_LENGTH=3 * 1024 * 1024,  # products.py enforces the 2 MB photo limit
+    MAX_CONTENT_LENGTH = 3 * 1024 * 1024,  # products.py enforces the 2 MB photo limit
 )
 app.jinja_env.globals["t"] = t
 app.teardown_appcontext(close_db)
@@ -26,6 +26,12 @@ app.register_blueprint(products_bp)
 app.register_blueprint(shop_bp)
 init_db()
 USERNAME_RE = re.compile(r"[A-Za-z0-9_]{3,30}")
+
+
+@app.route("/healthz")
+def healthz():
+    """Lightweight health check: no session lookup or database query."""
+    return {"status": "ok"}, 200
 
 
 @app.context_processor
